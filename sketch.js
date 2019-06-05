@@ -1,17 +1,19 @@
 // Family Tree
-var Genx = 65;
-var Geny = 65;
+var Genx = 0;
+var Geny = 0;
+var x = 600;
+var y = 500;
 
 function setup() {
 
-	createCanvas(850, 700);
+	createCanvas(1200, 1000);
 }
 
 function draw() {
 	
 	background(85);
 
-
+	Gen5();
 	Gen4();
 	Gen3();
 	Gen2(); 
@@ -23,66 +25,66 @@ function draw() {
 // Gen 0
 function Orgins() {
 
-	ellipse(300, 300, Genx, Geny); 
-	text('ዮትባነኺ', 280, 300);
+	ellipse(x+300, y+300, Genx+65, Geny+65); 
+	text('ዮትባነኺ', x+280, y+300);
 }
 
 // Gen 1
 function SebatBet()	{
 
-	ellipse(300, 300, Genx + 135, Geny + 135); // 7 bet circle
+	ellipse(x+300, y+300, Genx+200, Geny+200); // 7 bet circle
 	
-	ellipse(299, 235, Genx, Geny); 
-	text('ደሳ', 290, 235);
+	ellipse(x+299, y+235, Genx+65, Geny+65); 
+	text('ደሳ', x+290, y+235);
 
-	ellipse(243, 270, Genx, Geny);
-	text('አክሊል', 225, 270);
+	ellipse(x+243, y+270, Genx+65, Geny+65);
+	text('አክሊል', x+225, y+270);
 
-	ellipse(242, 336, Genx, Geny);
-	text('ውድማጠረ', 210, 345);
+	ellipse(x+242, y+336, Genx+65, Geny+65);
+	text('ውድማጠረ', x+210, y+345);
 
-	ellipse(300, 367, Genx, Geny);
-	text('ጀረትማ', 280, 370);
+	ellipse(x+300, y+367, Genx+65, Geny+65);
+	text('ጀረትማ', x+280, y+370);
 
-	ellipse(358, 332, Genx, Geny);
-	text('አሽተሙኚ', 335, 340);
+	ellipse(x+358, y+332, Genx+65, Geny+65);
+	text('አሽተሙኚ', x+335, y+340);
 
-	ellipse(358, 266, Genx, Geny);
-	text('አስፎ', 345, 270);
+	ellipse(x+358, y+266, Genx+65, Geny+65);
+	text('አስፎ', x+345, y+270);
 	
 }
 
 // Gen 2
 function Gen2()	{
-	ellipse(300, 300, 340, 340);
+	ellipse(x+300, y+300, Genx+340, Geny+340);
 	
-	ellipse(300, 165, 65, 65);
-	text('አዝንፋዝ', 280, 165);
+	ellipse(x+300, y+165, Genx+65, Geny+65);
+	text('አዝንፋዝ', x+280, y+165);
 
 }
 
 // Gen 3
 function Gen3()	{
-	ellipse(300, 300, 480, 480);
+	ellipse(x+300, y+300, Genx+480, Geny+480);
 	
-	ellipse(300, 95, Genx, Geny);
-	text('ደንበላዝ', 280, 95);
+	ellipse(x+300, y+95, Genx+65, Geny+65);
+	text('ደንበላዝ', x+280, y+95);
 }
 
 // Gen 4
 function Gen4()	{
-	ellipse(300, 300, 610, 610);
+	ellipse(x+300, y+300, Genx+620, Geny+620);
 	
-	ellipse(300, 25, Genx, Geny);
-	text('ሰርፄ', 280, 25);
+	ellipse(x+300, y+25, Genx+65, Geny+65);
+	text('ሰርፄ', x+290, y+25);
 }
 
 // Gen 5
 function Gen5()	{
-	ellipse(300, 300, 340, 340);
+	ellipse(x+300, y+300, Genx+820, Geny+820);
 	
-	ellipse(300, 165, 65, 65);
-	text('ተክሌ', 280, 165);
+	ellipse(x+300, y-45, Genx+65, Geny+65);
+	text('ተክሌ', x+290, y-40);
 
 }
 
