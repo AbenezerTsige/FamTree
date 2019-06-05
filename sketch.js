@@ -23,17 +23,16 @@ function draw() {
   xx = xx + 300;
   yy = yy + 300;
 
-  /*
+  
+  ellipse( xx, yy, xgen + ( z * 9) , ygen + ( z * 9 ) );
   Gen9(xx, yy, xgen, ygen);
+
+  ellipse( xx, yy, xgen + ( z * 8) , ygen + ( z * 8 ) );
   Gen8(xx, yy, xgen, ygen);
+   
+  ellipse( xx, yy, xgen + ( z * 7) , ygen + ( z * 7 ) );
   Gen7(xx, yy, xgen, ygen);
   
-  
-
-  
-  // ellipse(x, y, Genx+760, Geny+760);
-  */
-
   ellipse( xx, yy, xgen + ( z * 6) , ygen + ( z * 6 ) );
   Gen6(xx, yy, xgen, ygen);
 
@@ -118,48 +117,44 @@ function Gen5(x, y, Genx, Geny) {
 
 // Gen 6 
 function Gen6(x, y, Genx, Geny) {
-  ellipse(x, y, Genx+900, Geny+900);
   
-  ellipse(x, y-415, Genx+75, Geny+65);
-  text('ራስ', x-10, y-425);
-  text('ደመክርስቶስ', x-30, y-405);
+  ellipse( x, y - ( z * 3) , Genx + 10, Geny );
+  text( 'ራስ' , x - 10, y - ( z * 3.1 ) );
+  text( 'ደመክርስቶስ' , x - 30, y - ( z * 2.93 ) );
 
-  ellipse(x+73, y-407, Genx+65, Geny+65);
-  text('ልብሶ', x+60, y-405);
+  ellipse( x + 73, y - ( z * 2.95 ), Genx, Geny);
+  text( 'ልብሶ', x + 60, y - ( z * 2.93) );
   
 }
 
 // Gen 7
 function Gen7(x, y, Genx, Geny) {
-  ellipse(x, y, Genx+1040, Geny+1040);
   
-  ellipse(x, y-485, Genx+65, Geny+65);
-  text('አንበሳ', x-20, y-480);
+  ellipse( x , y - ( z * 3.5 ) , Genx , Geny );
+  text('አንበሳ', x - 20 , y - ( z * 3.5 ) );
 
-  ellipse(x+67, y-479, Genx+65, Geny+65);
-  text('አባሎ', x+58, y-480);
+  ellipse( x + 67 , y - ( z * 3.45 ) , Genx , Geny );
+  text( 'አባሎ' , x + 58 , y - ( z * 3.5 ) );
 
 }
 
 // Gen 8
 function Gen8(x, y, Genx, Geny) {
-  ellipse(x, y, Genx+1180, Geny+1180);
   
-  ellipse(x, y-555, Genx+65, Geny+65);
-  text('መንደል', x-20, y-555);
+  ellipse( x , y - ( z * 4) , Genx , Geny );
+  text( 'መንደል' , x - 20 , y - ( z * 4) );
 
-  ellipse(x+67, y-550, Genx+65, Geny+65);
-  text('ዥርገራድ', x+40, y-550);
+  ellipse( x + 67, y - ( z * 3.97) , Genx , Geny );
+  text( 'ዥርገራድ' , x + 40 , y - ( z * 4) );
 
 }
 
 // Gen 9
 function Gen9(x, y, Genx, Geny) {
-  ellipse(x, y, Genx+1320, Geny+1320);
   
-  ellipse(x, y-45, Genx+95, Geny+65);
-  //text('መንደል', x-20, y-45);
+  ellipse( x , y - ( z * 4.5 ) , Genx + 20 , Geny );
+  text( 'መንደል' , x - 20 , y - 45);
 
-  //ellipse(x+100, y-255, Genx+75, Geny+65);
-  //text('ዥርገራድ', x+80, y-45);
+  ellipse( x + 85 , y - ( z * 4.45 ), Genx + 15, Geny );
+  text( 'ዥርገራድ' , x + 80, y - 45);
 }
