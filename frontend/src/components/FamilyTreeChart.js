@@ -79,40 +79,42 @@ const FamilyTreeChart = ({ data }) => {
         const siblingIndex = node.siblingIndex || 0;
         
         if (numSiblings === 1) {
-          // Single child - center it
-          node.startAngle = -Math.PI / 2;
-          node.endAngle = Math.PI / 2;
-        } else if (numSiblings === 2) {
-          // Two children: perfectly centered in left and right half circles
-          // Position based on name: Robert Smith goes to RIGHT, Michael Smith goes to LEFT
-          // Check if this is Robert Smith (should be on right) or Michael Smith (should be on left)
-          const firstName = (node.first_name || '').toLowerCase();
-          const isRobert = firstName.includes('robert');
-          const isMichael = firstName.includes('michael');
-          
-          if (isRobert || (!isMichael && siblingIndex === 1)) {
-            // Robert Smith (or second child if name doesn't match) - moved UP (top of chart)
-            // Position at top: Math.PI/2 (90 degrees, top of chart)
-            node.startAngle = Math.PI / 2 - Math.PI / 4; // Start before top
-            node.endAngle = Math.PI / 2 + Math.PI / 4; // End after top
-            // Ensure midAngle is exactly Math.PI/2 (top)
-            node.midAngle = Math.PI / 2;
-          } else {
-            // Michael Smith (or first child if name doesn't match) in LEFT half - perfectly centered at -90 degrees
-            node.startAngle = -Math.PI;
-            node.endAngle = 0;
-            // Ensure midAngle is exactly -90 degrees (left side)
-            node.midAngle = -Math.PI / 2;
-          }
-          node.angleSpan = Math.PI; // Each half is exactly 180 degrees
+          // Single child - use full circle, no division needed
+          // SVG coordinates: 0° = right, 90° = bottom, 180° = left, 270° = top
+          node.startAngle = 0;
+          node.endAngle = 2 * Math.PI; // Full 360 degrees (complete circle)
+          node.midAngle = 3 * Math.PI / 2; // 270 degrees (top in SVG) for name position
+          node.angleSpan = 2 * Math.PI;
         } else {
-          // More than 2 siblings - divide evenly
-          const parentSpan = parentEndAngle - parentStartAngle;
-          const step = parentSpan / numSiblings;
-          node.startAngle = parentStartAngle + step * siblingIndex;
-          node.endAngle = node.startAngle + step;
-          node.midAngle = (node.startAngle + node.endAngle) / 2;
-          node.angleSpan = node.endAngle - node.startAngle;
+          // Multiple children - specific arc boundaries
+          // SVG coordinates: 0° = right, 90° = bottom, 180° = left, 270° = top
+          const fullCircle = 2 * Math.PI; // 360 degrees
+          
+          if (numSiblings === 2) {
+            // Two children: specific arcs
+            if (siblingIndex === 0) {
+              // Child 1: arc from 0° (right) through 270° (top) to 180° (left)
+              // Going counter-clockwise: 0° → 270° → 180°
+              node.startAngle = 0; // 0 degrees (right)
+              node.endAngle = Math.PI; // 180 degrees (left)
+              node.midAngle = 3 * Math.PI / 2; // 270 degrees (top) for name position
+              node.angleSpan = Math.PI; // 180 degrees
+            } else {
+              // Child 2: arc from 180° (left) through 90° (bottom) to 0° (right, wrapping)
+              // Going counter-clockwise: 180° → 90° → 0° (360°)
+              node.startAngle = Math.PI; // 180 degrees (left)
+              node.endAngle = 2 * Math.PI; // 360 degrees (0°, right)
+              node.midAngle = Math.PI / 2; // 90 degrees (bottom) for name position
+              node.angleSpan = Math.PI; // 180 degrees
+            }
+          } else {
+            // Three or more children - divide evenly starting from 0° (right)
+            const anglePerChild = fullCircle / numSiblings; // 360° / number of relatives
+            node.startAngle = siblingIndex * anglePerChild;
+            node.endAngle = (siblingIndex + 1) * anglePerChild;
+            node.midAngle = node.startAngle + (anglePerChild / 2); // Name at midpoint
+            node.angleSpan = anglePerChild;
+          }
         }
       } else {
         // 3️⃣ SIBLING SPACING - Divide parent's angular span evenly
@@ -125,10 +127,18 @@ const FamilyTreeChart = ({ data }) => {
         node.endAngle = node.startAngle + step;
       }
 
-      // Calculate midAngle and angleSpan (only if not already set for first generation with 2 siblings)
-      if (!(depth === 1 && node.parentNode && node.parentNode.children && node.parentNode.children.length === 2)) {
+      // Calculate midAngle and angleSpan (only if not already set)
+      // For first generation with 1 or 2 siblings, midAngle is already set explicitly above
+      // Check if midAngle was already set - if so, don't recalculate
+      if (node.midAngle === undefined || node.midAngle === null) {
+        // midAngle not set yet - calculate it
         node.midAngle = (node.startAngle + node.endAngle) / 2;
         node.angleSpan = node.endAngle - node.startAngle;
+      } else {
+        // midAngle already set explicitly - just ensure angleSpan is set
+        if (!node.angleSpan) {
+          node.angleSpan = node.endAngle - node.startAngle;
+        }
       }
 
       // 4️⃣ COLOR ASSIGNMENT
@@ -137,18 +147,34 @@ const FamilyTreeChart = ({ data }) => {
         ? originalColor.trim() 
         : null;
       
+      // Ensure branchIndex is defined (default to 0 if not)
+      const safeBranchIndex = branchIndex !== undefined && branchIndex !== null ? branchIndex : 0;
+      
+      // Store branchIndex on node for later use
+      node.branchIndex = safeBranchIndex;
+      
       if (customColor) {
         // Custom color from database - use it directly
         node.color = customColor;
       } else if (depth === 0) {
         // Root node - dark color
         node.color = '#2c3e50';
-      } else if (depth === 1) {
-        // First generation children - assign default branch colors
-        node.color = branchColors[branchIndex % branchColors.length];
       } else {
-        // Future generations - use default branch colors if no custom color
-        node.color = branchColors[branchIndex % branchColors.length];
+        // All children (depth > 0) - assign default branch colors
+        // For first generation, branchIndex is set by the parent (root's children get index 0, 1, 2, etc.)
+        // For deeper generations, they inherit the parent's branchIndex
+        node.color = branchColors[safeBranchIndex % branchColors.length];
+      }
+      
+      // Debug: ensure color is always set
+      if (!node.color) {
+        console.warn(`Warning: node.color is undefined for depth ${depth}, branchIndex ${safeBranchIndex}, name: ${node.first_name}`);
+        node.color = branchColors[safeBranchIndex % branchColors.length];
+      }
+      
+      // Debug log for color assignment (remove after debugging)
+      if (depth > 1) {
+        console.log(`Color assigned: depth=${depth}, name=${node.first_name}, originalColor=${originalColor}, branchIndex=${safeBranchIndex}, finalColor=${node.color}`);
       }
 
       // Process children
@@ -179,14 +205,19 @@ const FamilyTreeChart = ({ data }) => {
     const maxDepth = getMaxDepth(treeWithLayout);
 
     // Generation labels
+    // depth 0 = Root/Founder (innermost circle)
+    // depth 1 = First Generation (first ring of children)
+    // depth 2 = Second Generation (grandchildren)
+    // etc.
     const generationLabels = [
+      null, // Root/Founder - no label needed (or could be "Founder")
       'First Generation',
-      'Second Generation (Parents)',
-      'Third Generation (Grandparents)',
-      'Fourth Generation (Great Grandparents)',
-      'Fifth Generation (2nd Great Grandparents)',
-      'Sixth Generation (3rd Great Grandparents)',
-      'Seventh Generation (4th Great Grandparents)'
+      'Second Generation',
+      'Third Generation',
+      'Fourth Generation',
+      'Fifth Generation',
+      'Sixth Generation',
+      'Seventh Generation'
     ];
 
     // Draw generation rings and labels
@@ -209,10 +240,11 @@ const FamilyTreeChart = ({ data }) => {
         .attr("stroke-width", 1)
         .attr("opacity", 0.3);
 
-      // Generation label - place at top of chart
+      // Generation label - place using SVG coordinates
+      // SVG coordinates: 0° = right, 90° = bottom, 180° = left, 270° = top
       if (generationLabels[depth]) {
         const labelRadius = outerRadius + 15;
-        const labelAngle = -Math.PI / 2; // Top of chart (-90 degrees / 270 degrees)
+        const labelAngle = 3 * Math.PI / 2; // 270 degrees (top in SVG)
         const labelX = centerX + labelRadius * Math.cos(labelAngle);
         const labelY = centerY + labelRadius * Math.sin(labelAngle);
 
@@ -270,7 +302,7 @@ const FamilyTreeChart = ({ data }) => {
           .attr("font-weight", "bold")
           .attr("stroke", "rgba(0,0,0,0.5)")
           .attr("stroke-width", "1px")
-          .text(`${node.first_name} ${node.last_name}`);
+          .text(node.last_name ? `${node.first_name} ${node.last_name}` : node.first_name);
 
         const birthYear = new Date(node.birth_date).getFullYear();
         g.append("text")
@@ -361,7 +393,7 @@ const FamilyTreeChart = ({ data }) => {
           .attr("font-weight", fontWeight)
           .attr("stroke", node.depth === 1 ? "none" : "rgba(0,0,0,0.5)")
           .attr("stroke-width", strokeWidth)
-          .text(`${node.first_name} ${node.last_name}`);
+          .text(node.last_name ? `${node.first_name} ${node.last_name}` : node.first_name);
 
         // Adjust font size if text is too wide, but ensure minimum readability
         try {
@@ -432,6 +464,13 @@ const FamilyTreeChart = ({ data }) => {
 
     // Draw segments (without text)
     const drawSegmentsOnly = (node) => {
+      const numSiblings = node.parentNode ? node.parentNode.children.length : 1;
+      
+      // Debug: log color for deeper generations (remove after debugging)
+      if (node.depth > 1) {
+        console.log(`Drawing segment: depth=${node.depth}, name=${node.first_name}, node.color=${node.color}, node.branchIndex=${node.branchIndex}`);
+      }
+      
       if (node.depth === 0) {
         // Root node is a circle
         g.append("circle")
@@ -449,12 +488,62 @@ const FamilyTreeChart = ({ data }) => {
             d3.select(this).attr("opacity", 0.95).attr("stroke-width", 2);
           });
       } else {
-        // Create arc path for segment - ensure we have valid angles
-        const startAngle = Math.min(node.startAngle, node.endAngle);
-        const endAngle = Math.max(node.startAngle, node.endAngle);
+        // Create arc path for segment - handle wrap-around and full circle
+        let startAngle = node.startAngle;
+        let endAngle = node.endAngle;
+        
+        // Handle full circle (360°) - single child case (no division, just full circle)
+        if (node.depth === 1 && numSiblings === 1) {
+          // Single child - draw as complete circle, no division
+          const fullCircleArc = d3.arc()
+            .innerRadius(node.innerRadius)
+            .outerRadius(node.outerRadius)
+            .startAngle(0)
+            .endAngle(2 * Math.PI);
+          
+          // Ensure color is set - use fallback if not
+          const defaultColors = ['#4a90e2', '#50c878', '#ff6b6b', '#ffa500', '#9b59b6'];
+          const fillColor1 = node.color || defaultColors[(node.branchIndex || 0) % defaultColors.length] || '#4a90e2';
+          
+          g.append("path")
+            .attr("d", fullCircleArc)
+            .attr("transform", `translate(${centerX}, ${centerY})`)
+            .attr("fill", fillColor1)
+            .attr("stroke", "rgba(255, 255, 255, 0.3)")
+            .attr("stroke-width", 1.5)
+            .attr("opacity", 0.9)
+            .on("mouseover", function() {
+              d3.select(this).attr("opacity", 1).attr("stroke-width", 2.5);
+            })
+            .on("mouseout", function() {
+              d3.select(this).attr("opacity", 0.9).attr("stroke-width", 1.5);
+            });
+          return; // Skip the normal arc drawing
+        }
+        
+        // Handle arc drawing - D3 draws arcs counter-clockwise
+        // For Child 1: we want arc from 0° to 180° going counter-clockwise (0° → 270° → 180°)
+        // For Child 2: we want arc from 180° to 360° going counter-clockwise (180° → 90° → 0°)
+        if (node.depth === 1 && numSiblings === 2) {
+          // Two children - use angles as specified (D3 will draw counter-clockwise)
+          if (node.siblingIndex === 0) {
+            // Child 1: 0° to 180° (counter-clockwise: 0° → 270° → 180°)
+            startAngle = node.startAngle; // 0°
+            endAngle = node.endAngle; // 180°
+          } else {
+            // Child 2: 180° to 360° (counter-clockwise: 180° → 90° → 0°/360°)
+            startAngle = node.startAngle; // 180°
+            endAngle = node.endAngle; // 360°
+          }
+        } else {
+          // For other arcs, ensure proper ordering
+          startAngle = Math.min(node.startAngle, node.endAngle);
+          endAngle = Math.max(node.startAngle, node.endAngle);
+        }
         
         // Only draw if segment has valid size
-        if (endAngle - startAngle > 0.001) {
+        const angleDiff = endAngle > Math.PI ? (2 * Math.PI - endAngle + startAngle) : (endAngle - startAngle);
+        if (angleDiff > 0.001) {
           const arc = d3.arc()
             .innerRadius(node.innerRadius)
             .outerRadius(node.outerRadius)
@@ -462,10 +551,14 @@ const FamilyTreeChart = ({ data }) => {
             .endAngle(endAngle);
 
           // Draw segment
+          // Ensure color is set - use fallback if not
+          const defaultColors = ['#4a90e2', '#50c878', '#ff6b6b', '#ffa500', '#9b59b6'];
+          const fillColor = node.color || defaultColors[(node.branchIndex || 0) % defaultColors.length] || '#4a90e2';
+          
           g.append("path")
             .attr("d", arc)
             .attr("transform", `translate(${centerX}, ${centerY})`)
-            .attr("fill", node.color)
+            .attr("fill", fillColor)
             .attr("stroke", "rgba(255, 255, 255, 0.3)")
             .attr("stroke-width", 1.5)
             .attr("opacity", 0.9)

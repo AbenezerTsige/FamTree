@@ -13,7 +13,7 @@ class Person(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=True)  # Optional, can be empty
     birth_date = Column(Date, nullable=False)
     gender = Column(String, nullable=False)  # Using String instead of Enum for simplicity
     parent_id = Column(Integer, ForeignKey("persons.id"), nullable=True)

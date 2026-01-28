@@ -8,7 +8,6 @@ const FamilyMembers = ({ onMemberChange }) => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     first_name: '',
-    last_name: '',
     birth_date: '',
     gender: 'male',
     parent_id: '',
@@ -42,7 +41,8 @@ const FamilyMembers = ({ onMemberChange }) => {
     try {
       const submitData = {
         ...formData,
-        parent_id: formData.parent_id ? parseInt(formData.parent_id) : null
+        last_name: '', // Set empty string for last_name
+        parent_id: formData.parent_id && formData.parent_id !== 'none' ? parseInt(formData.parent_id) : null
       };
 
       if (editingId) {
@@ -75,7 +75,6 @@ const FamilyMembers = ({ onMemberChange }) => {
     setEditingId(member.id);
     setFormData({
       first_name: member.first_name,
-      last_name: member.last_name,
       birth_date: member.birth_date,
       gender: member.gender,
       parent_id: member.parent_id || '',
@@ -84,22 +83,34 @@ const FamilyMembers = ({ onMemberChange }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this family member?')) {
+    const member = members.find(m => m.id === id);
+    const memberName = member ? (member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name) : 'this member';
+    
+    if (!window.confirm(`Are you sure you want to delete ${memberName}? This will also delete all their descendants.`)) {
       return;
     }
 
     try {
+      setError(null);
       const response = await fetch(`${apiUrl}/api/persons/${id}`, {
         method: 'DELETE'
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to delete member');
       }
+      
+      // Refresh the members list to reflect the deletion
       await fetchMembers();
-      if (onMemberChange) onMemberChange();
+      
+      // Update the dashboard to reflect changes
+      if (onMemberChange) {
+        onMemberChange();
+      }
     } catch (err) {
       setError(err.message);
+      console.error('Delete error:', err);
     }
   };
 
@@ -107,7 +118,6 @@ const FamilyMembers = ({ onMemberChange }) => {
     setEditingId(null);
     setFormData({
       first_name: '',
-      last_name: '',
       birth_date: '',
       gender: 'male',
       parent_id: '',
@@ -117,7 +127,8 @@ const FamilyMembers = ({ onMemberChange }) => {
 
   const getMemberName = (id) => {
     const member = members.find(m => m.id === id);
-    return member ? `${member.first_name} ${member.last_name}` : 'Unknown';
+    if (!member) return 'Unknown';
+    return member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name;
   };
 
   if (loading) {
@@ -156,13 +167,21 @@ const FamilyMembers = ({ onMemberChange }) => {
             />
           </div>
           <div className="form-group">
-            <label>Last Name *</label>
-            <input
-              type="text"
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            <label>Parent *</label>
+            <select
+              value={formData.parent_id || 'none'}
+              onChange={(e) => setFormData({ ...formData, parent_id: e.target.value === 'none' ? '' : e.target.value })}
               required
-            />
+            >
+              <option value="none">None (Root/Founder)</option>
+              {members
+                .filter(m => !editingId || m.id !== editingId)
+                .map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name} ({new Date(member.birth_date).getFullYear()})
+                  </option>
+                ))}
+            </select>
           </div>
         </div>
 
@@ -191,22 +210,6 @@ const FamilyMembers = ({ onMemberChange }) => {
         </div>
 
         <div className="form-row">
-          <div className="form-group">
-            <label>Parent (Optional)</label>
-            <select
-              value={formData.parent_id}
-              onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-            >
-              <option value="">None (Root/Founder)</option>
-              {members
-                .filter(m => !editingId || m.id !== editingId)
-                .map(member => (
-                  <option key={member.id} value={member.id}>
-                    {member.first_name} {member.last_name} ({new Date(member.birth_date).getFullYear()})
-                  </option>
-                ))}
-            </select>
-          </div>
           <div className="form-group">
             <label>Color</label>
             <div className="color-picker-container">
@@ -256,7 +259,7 @@ const FamilyMembers = ({ onMemberChange }) => {
                 members.map(member => (
                   <tr key={member.id}>
                     <td>{member.id}</td>
-                    <td>{member.first_name} {member.last_name}</td>
+                    <td>{member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name}</td>
                     <td>{new Date(member.birth_date).toLocaleDateString()}</td>
                     <td>
                       <span className={`gender-badge gender-${member.gender}`}>

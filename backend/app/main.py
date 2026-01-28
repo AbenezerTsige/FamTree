@@ -68,19 +68,25 @@ def update_person(person_id: int, person: schemas.PersonCreate, db: Session = De
 
 @app.delete("/api/persons/{person_id}")
 def delete_person(person_id: int, db: Session = Depends(database.get_db)):
-    """Delete a person"""
+    """Delete a person and all their descendants (cascade delete)"""
     db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
     if not db_person:
         raise HTTPException(status_code=404, detail="Person not found")
     
-    # Check if person has children
-    children = db.query(models.Person).filter(models.Person.parent_id == person_id).count()
-    if children > 0:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Cannot delete person with {children} child(ren). Please delete or reassign children first."
-        )
+    # Recursively delete all descendants first
+    def delete_descendants(parent_id: int):
+        """Recursively delete all children and their descendants"""
+        children = db.query(models.Person).filter(models.Person.parent_id == parent_id).all()
+        for child in children:
+            # Recursively delete grandchildren first
+            delete_descendants(child.id)
+            # Then delete the child
+            db.delete(child)
     
+    # Delete all descendants
+    delete_descendants(person_id)
+    
+    # Finally, delete the person themselves
     db.delete(db_person)
     db.commit()
-    return {"message": "Person deleted successfully"}
+    return {"message": "Person and all descendants deleted successfully"}

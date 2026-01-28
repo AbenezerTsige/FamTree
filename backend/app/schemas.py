@@ -4,7 +4,7 @@ from typing import Optional, List
 
 class PersonBase(BaseModel):
     first_name: str
-    last_name: str
+    last_name: Optional[str] = ""  # Optional, defaults to empty string
     birth_date: date
     gender: str
     parent_id: Optional[int] = None
