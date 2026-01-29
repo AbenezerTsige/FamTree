@@ -31,8 +31,8 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./backend:/app
-    command: sh -c "python init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      - ./backend:/app:z
+    command: sh -c "python3 init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build:

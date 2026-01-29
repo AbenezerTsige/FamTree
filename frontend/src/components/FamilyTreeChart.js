@@ -32,6 +32,46 @@ const FamilyTreeChart = ({ data }) => {
     // Create a group for zoomable content
     const g = svg.append("g");
 
+    // Draw system grid (behind chart) - vertical and horizontal lines
+    const GRID_SPACING = 50;
+    const gridGroup = g.append("g").attr("class", "chart-grid");
+
+    // Vertical lines
+    for (let x = 0; x <= width; x += GRID_SPACING) {
+      gridGroup.append("line")
+        .attr("x1", x)
+        .attr("y1", 0)
+        .attr("x2", x)
+        .attr("y2", height)
+        .attr("stroke", "rgba(255, 255, 255, 0.08)")
+        .attr("stroke-width", x === centerX ? 0.5 : 0.25);
+    }
+    // Horizontal lines
+    for (let y = 0; y <= height; y += GRID_SPACING) {
+      gridGroup.append("line")
+        .attr("x1", 0)
+        .attr("y1", y)
+        .attr("x2", width)
+        .attr("y2", y)
+        .attr("stroke", "rgba(255, 255, 255, 0.08)")
+        .attr("stroke-width", y === centerY ? 0.5 : 0.25);
+    }
+    // Center cross (axes) - slightly more visible
+    gridGroup.append("line")
+      .attr("x1", centerX)
+      .attr("y1", 0)
+      .attr("x2", centerX)
+      .attr("y2", height)
+      .attr("stroke", "rgba(255, 255, 255, 0.15)")
+      .attr("stroke-width", 0.5);
+    gridGroup.append("line")
+      .attr("x1", 0)
+      .attr("y1", centerY)
+      .attr("x2", width)
+      .attr("y2", centerY)
+      .attr("stroke", "rgba(255, 255, 255, 0.15)")
+      .attr("stroke-width", 0.5);
+
     // Set up zoom behavior
     const zoom = d3.zoom()
       .scaleExtent([0.1, 5])
@@ -49,6 +89,15 @@ const FamilyTreeChart = ({ data }) => {
     // 2️⃣ GENERATION → RADIUS MAPPING
     const RING_WIDTH = 80;
     const CENTER_RADIUS = 40; // Center circle radius for root
+
+    // Label at center of each slice: LabelAngle(i) = (ArcAngle * (i - 0.5)) % 360; ArcAngle = 360/N; i = 1-based.
+    const getChildLabelAngleRad = (numChildren, childIndex1Based) => {
+      if (numChildren <= 0) return 0;
+      const arcAngleDeg = 360 / numChildren;
+      const labelAngleDeg = (arcAngleDeg * (childIndex1Based - 0.5)) % 360;
+      const normalized = ((labelAngleDeg % 360) + 360) % 360;
+      return (normalized * Math.PI) / 180;
+    };
 
     // Build tree structure with depth and layout
     const buildTreeWithLayout = (node, depth = 0, parentStartAngle = null, parentEndAngle = null, branchIndex = 0, parentBranchColor = null) => {
@@ -74,57 +123,48 @@ const FamilyTreeChart = ({ data }) => {
         node.startAngle = FAN_START;
         node.endAngle = FAN_END;
       } else if (depth === 1) {
-        // First generation: position in middle of left and right half circles
+        // First generation: Child 1 arc always starts at 0; equal slices; remainder in last child
         const numSiblings = node.parentNode ? node.parentNode.children.length : 1;
         const siblingIndex = node.siblingIndex || 0;
-        
-        if (numSiblings === 1) {
-          // Single child - use full circle, no division needed
-          // SVG coordinates: 0° = right, 90° = bottom, 180° = left, 270° = top
+        const childIndex1Based = siblingIndex + 1;
+        const fullCircle = 2 * Math.PI;
+        const anglePerChild = fullCircle / numSiblings;
+
+        if (siblingIndex === 0) {
+          // Child 1: always [0, anglePerChild]; never move start away from 0
           node.startAngle = 0;
-          node.endAngle = 2 * Math.PI; // Full 360 degrees (complete circle)
-          node.midAngle = 3 * Math.PI / 2; // 270 degrees (top in SVG) for name position
-          node.angleSpan = 2 * Math.PI;
+          node.endAngle = anglePerChild;
         } else {
-          // Multiple children - specific arc boundaries
-          // SVG coordinates: 0° = right, 90° = bottom, 180° = left, 270° = top
-          const fullCircle = 2 * Math.PI; // 360 degrees
-          
-          if (numSiblings === 2) {
-            // Two children: specific arcs
-            if (siblingIndex === 0) {
-              // Child 1: arc from 0° (right) through 270° (top) to 180° (left)
-              // Going counter-clockwise: 0° → 270° → 180°
-              node.startAngle = 0; // 0 degrees (right)
-              node.endAngle = Math.PI; // 180 degrees (left)
-              node.midAngle = 3 * Math.PI / 2; // 270 degrees (top) for name position
-              node.angleSpan = Math.PI; // 180 degrees
-            } else {
-              // Child 2: arc from 180° (left) through 90° (bottom) to 0° (right, wrapping)
-              // Going counter-clockwise: 180° → 90° → 0° (360°)
-              node.startAngle = Math.PI; // 180 degrees (left)
-              node.endAngle = 2 * Math.PI; // 360 degrees (0°, right)
-              node.midAngle = Math.PI / 2; // 90 degrees (bottom) for name position
-              node.angleSpan = Math.PI; // 180 degrees
-            }
-          } else {
-            // Three or more children - divide evenly starting from 0° (right)
-            const anglePerChild = fullCircle / numSiblings; // 360° / number of relatives
-            node.startAngle = siblingIndex * anglePerChild;
-            node.endAngle = (siblingIndex + 1) * anglePerChild;
-            node.midAngle = node.startAngle + (anglePerChild / 2); // Name at midpoint
-            node.angleSpan = anglePerChild;
-          }
+          // Other children: start after previous slice; last child gets remainder so 0 stays fixed
+          node.startAngle = siblingIndex * anglePerChild;
+          node.endAngle = siblingIndex === numSiblings - 1 ? fullCircle : (siblingIndex + 1) * anglePerChild;
         }
+
+        node.midAngle = getChildLabelAngleRad(numSiblings, childIndex1Based);
+        node.angleSpan = node.endAngle - node.startAngle;
       } else {
         // 3️⃣ SIBLING SPACING - Divide parent's angular span evenly
-        const parentSpan = parentEndAngle - parentStartAngle;
+        // Child 1 (siblingIndex 0) always gets the first slice starting at parentStartAngle
         const numSiblings = node.parentNode ? node.parentNode.children.length : 1;
-        const step = parentSpan / numSiblings;
         const siblingIndex = node.siblingIndex || 0;
         
-        node.startAngle = parentStartAngle + step * siblingIndex;
-        node.endAngle = node.startAngle + step;
+        // Handle wrap-around for parent span
+        let parentSpan;
+        if (parentEndAngle >= parentStartAngle) {
+          parentSpan = parentEndAngle - parentStartAngle;
+        } else {
+          parentSpan = (2 * Math.PI - parentStartAngle) + parentEndAngle;
+        }
+        
+        const step = parentSpan / numSiblings;
+        node.startAngle = (parentStartAngle + step * siblingIndex) % (2 * Math.PI);
+        node.endAngle = (node.startAngle + step) % (2 * Math.PI);
+        
+        // Handle wrap-around for endAngle
+        if (node.endAngle < node.startAngle && node.endAngle < 0.1) {
+          // End wraps around - keep it > 2π temporarily for calculation
+          node.endAngle = node.startAngle + step;
+        }
       }
 
       // Calculate midAngle and angleSpan (only if not already set)
@@ -177,11 +217,14 @@ const FamilyTreeChart = ({ data }) => {
         console.log(`Color assigned: depth=${depth}, name=${node.first_name}, originalColor=${originalColor}, branchIndex=${safeBranchIndex}, finalColor=${node.color}`);
       }
 
-      // Process children
+      // Process children - sort by ID to ensure consistent order
       if (node.children && node.children.length > 0) {
-        node.children.forEach((child, index) => {
+        // Sort children by ID to ensure consistent ordering (child 1, child 2, child 3...)
+        const sortedChildren = [...node.children].sort((a, b) => (a.id || 0) - (b.id || 0));
+        
+        sortedChildren.forEach((child, index) => {
           child.parentNode = node;
-          child.siblingIndex = index;
+          child.siblingIndex = index; // 0-based: 0, 1, 2, 3...
           // Siblings share the same branch index and base color
           // Only root's children get different branch indices (different colors)
           const childBranchIndex = depth === 0 ? index : branchIndex;
@@ -219,6 +262,112 @@ const FamilyTreeChart = ({ data }) => {
       'Sixth Generation',
       'Seventh Generation'
     ];
+
+    // Angle reference: axes, degree labels, quadrants (SVG: 0°=right=X+, 90°=bottom=Y+)
+    const angleRefRadius = CENTER_RADIUS + RING_WIDTH * (maxDepth + 1) + 35;
+    const tickInner = CENTER_RADIUS + RING_WIDTH * (maxDepth + 1);
+    const axisGroup = g.append("g").attr("class", "angle-reference");
+
+    // Radial tick lines at 0°, 90°, 180°, 270°
+    [0, 90, 180, 270].forEach((deg) => {
+      const rad = (deg * Math.PI) / 180;
+      axisGroup.append("line")
+        .attr("x1", centerX + tickInner * Math.cos(rad))
+        .attr("y1", centerY + tickInner * Math.sin(rad))
+        .attr("x2", centerX + angleRefRadius * Math.cos(rad))
+        .attr("y2", centerY + angleRefRadius * Math.sin(rad))
+        .attr("stroke", "rgba(255, 200, 100, 0.5)")
+        .attr("stroke-width", 1);
+    });
+
+    // X axis and Y axis labels (along the axes, outside the circle)
+    const axisLabelRadius = angleRefRadius + 22;
+    axisGroup.append("text")
+      .attr("x", centerX + axisLabelRadius)
+      .attr("y", centerY)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("fill", "rgba(255, 220, 120, 0.95)")
+      .attr("font-size", "12px")
+      .attr("font-weight", "700")
+      .text("X axis (0°)");
+    axisGroup.append("text")
+      .attr("x", centerX - axisLabelRadius)
+      .attr("y", centerY)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("fill", "rgba(255, 220, 120, 0.95)")
+      .attr("font-size", "12px")
+      .attr("font-weight", "700")
+      .text("X axis (180°)");
+    axisGroup.append("text")
+      .attr("x", centerX)
+      .attr("y", centerY + axisLabelRadius)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("fill", "rgba(120, 220, 255, 0.95)")
+      .attr("font-size", "12px")
+      .attr("font-weight", "700")
+      .text("Y axis (90°)");
+    axisGroup.append("text")
+      .attr("x", centerX)
+      .attr("y", centerY - axisLabelRadius)
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .attr("fill", "rgba(120, 220, 255, 0.95)")
+      .attr("font-size", "12px")
+      .attr("font-weight", "700")
+      .text("Y axis (270°)");
+
+    // Degree labels at axis ends
+    const angleRefs = [
+      { deg: 0, label: "0°" },
+      { deg: 90, label: "90°" },
+      { deg: 180, label: "180°" },
+      { deg: 270, label: "270°" }
+    ];
+    angleRefs.forEach(({ deg, label }) => {
+      const rad = (deg * Math.PI) / 180;
+      const x = centerX + angleRefRadius * Math.cos(rad);
+      const y = centerY + angleRefRadius * Math.sin(rad);
+      axisGroup.append("text")
+        .attr("x", x)
+        .attr("y", y)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "rgba(255, 200, 100, 0.9)")
+        .attr("font-size", "11px")
+        .attr("font-weight", "700")
+        .text(label);
+    });
+
+    // Quadrant labels: Q1, Q2, Q3, Q4 with angle ranges
+    const quadRadius = angleRefRadius - 18;
+    [
+      { deg: 45, label: "Quadrant 1 (Q1)", sub: "0° – 90°" },
+      { deg: 135, label: "Quadrant 2 (Q2)", sub: "90° – 180°" },
+      { deg: 225, label: "Quadrant 3 (Q3)", sub: "180° – 270°" },
+      { deg: 315, label: "Quadrant 4 (Q4)", sub: "270° – 360°" }
+    ].forEach(({ deg, label, sub }) => {
+      const rad = (deg * Math.PI) / 180;
+      const x = centerX + quadRadius * Math.cos(rad);
+      const y = centerY + quadRadius * Math.sin(rad);
+      axisGroup.append("text")
+        .attr("x", x)
+        .attr("y", y - 6)
+        .attr("text-anchor", "middle")
+        .attr("fill", "rgba(200, 200, 255, 0.95)")
+        .attr("font-size", "10px")
+        .attr("font-weight", "700")
+        .text(label);
+      axisGroup.append("text")
+        .attr("x", x)
+        .attr("y", y + 6)
+        .attr("text-anchor", "middle")
+        .attr("fill", "rgba(180, 180, 220, 0.85)")
+        .attr("font-size", "9px")
+        .text(sub);
+    });
 
     // Draw generation rings and labels
     for (let depth = 0; depth <= maxDepth; depth++) {
@@ -320,15 +469,12 @@ const FamilyTreeChart = ({ data }) => {
         let textRadius, textX, textY, rotationAngle, textAnchor;
         
         if (node.depth === 1) {
-          // First generation: style exactly like "First Generation" label
-          // Position centered inside the arc segment (at mid-radius)
+          // First generation: node.midAngle is set to label angle in buildTreeWithLayout
           textRadius = (node.innerRadius + node.outerRadius) / 2;
           textX = centerX + textRadius * Math.cos(node.midAngle);
           textY = centerY + textRadius * Math.sin(node.midAngle);
-          
-          // No rotation - text is horizontal like "First Generation" label
           rotationAngle = 0;
-          textAnchor = "middle"; // Same as generation label
+          textAnchor = "middle";
         } else {
           // Other generations: center text in the middle of the arc segment
           textRadius = midRadius;
@@ -448,6 +594,21 @@ const FamilyTreeChart = ({ data }) => {
           .attr("stroke", node.depth === 1 ? "none" : "rgba(0,0,0,0.4)")
           .attr("stroke-width", yearStrokeWidth)
           .text(birthYear);
+
+        // Debug: show actual angle and quadrant used for this label
+        const angleDeg = (node.midAngle * 180 / Math.PI + 360) % 360;
+        const angleDegRounded = Math.round(angleDeg);
+        const q = angleDeg < 90 ? "Q1" : angleDeg < 180 ? "Q2" : angleDeg < 270 ? "Q3" : "Q4";
+        const angleDy = (parseFloat(yearDy) + 12).toString();
+        textGroup.append("text")
+          .attr("text-anchor", textAnchor)
+          .attr("dy", angleDy)
+          .attr("fill", "#ffd24d")
+          .attr("font-size", "9px")
+          .attr("font-weight", "600")
+          .attr("stroke", "rgba(0,0,0,0.35)")
+          .attr("stroke-width", "0.6px")
+          .text(`${angleDegRounded}° ${q}`);
       }
     };
 
@@ -521,25 +682,8 @@ const FamilyTreeChart = ({ data }) => {
           return; // Skip the normal arc drawing
         }
         
-        // Handle arc drawing - D3 draws arcs counter-clockwise
-        // For Child 1: we want arc from 0° to 180° going counter-clockwise (0° → 270° → 180°)
-        // For Child 2: we want arc from 180° to 360° going counter-clockwise (180° → 90° → 0°)
-        if (node.depth === 1 && numSiblings === 2) {
-          // Two children - use angles as specified (D3 will draw counter-clockwise)
-          if (node.siblingIndex === 0) {
-            // Child 1: 0° to 180° (counter-clockwise: 0° → 270° → 180°)
-            startAngle = node.startAngle; // 0°
-            endAngle = node.endAngle; // 180°
-          } else {
-            // Child 2: 180° to 360° (counter-clockwise: 180° → 90° → 0°/360°)
-            startAngle = node.startAngle; // 180°
-            endAngle = node.endAngle; // 360°
-          }
-        } else {
-          // For other arcs, ensure proper ordering
-          startAngle = Math.min(node.startAngle, node.endAngle);
-          endAngle = Math.max(node.startAngle, node.endAngle);
-        }
+        startAngle = Math.min(node.startAngle, node.endAngle);
+        endAngle = Math.max(node.startAngle, node.endAngle);
         
         // Only draw if segment has valid size
         const angleDiff = endAngle > Math.PI ? (2 * Math.PI - endAngle + startAngle) : (endAngle - startAngle);

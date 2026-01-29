@@ -52,7 +52,10 @@ const FamilyMembers = ({ onMemberChange }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData)
         });
-        if (!response.ok) throw new Error('Failed to update member');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to update member');
+        }
       } else {
         // Create new member
         const response = await fetch(`${apiUrl}/api/persons`, {
@@ -60,7 +63,10 @@ const FamilyMembers = ({ onMemberChange }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData)
         });
-        if (!response.ok) throw new Error('Failed to create member');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to create member');
+        }
       }
 
       resetForm();
