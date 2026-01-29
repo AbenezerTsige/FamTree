@@ -11,7 +11,9 @@ const FamilyMembers = ({ onMemberChange }) => {
     birth_date: '',
     gender: 'male',
     parent_id: '',
-    color: '#4a90e2'  // Default color
+    color: '#4a90e2',
+    font_size: '12',
+    font_family: 'Arial'
   });
 
   const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
@@ -41,8 +43,10 @@ const FamilyMembers = ({ onMemberChange }) => {
     try {
       const submitData = {
         ...formData,
-        last_name: '', // Set empty string for last_name
-        parent_id: formData.parent_id && formData.parent_id !== 'none' ? parseInt(formData.parent_id) : null
+        last_name: '',
+        parent_id: formData.parent_id && formData.parent_id !== 'none' ? parseInt(formData.parent_id) : null,
+        font_size: formData.font_size || null,
+        font_family: formData.font_family || null
       };
 
       if (editingId) {
@@ -84,7 +88,9 @@ const FamilyMembers = ({ onMemberChange }) => {
       birth_date: member.birth_date,
       gender: member.gender,
       parent_id: member.parent_id || '',
-      color: member.color || '#4a90e2'
+      color: member.color || '#4a90e2',
+      font_size: member.font_size || '12',
+      font_family: member.font_family || 'Arial'
     });
   };
 
@@ -127,7 +133,9 @@ const FamilyMembers = ({ onMemberChange }) => {
       birth_date: '',
       gender: 'male',
       parent_id: '',
-      color: '#4a90e2'
+      color: '#4a90e2',
+      font_size: '12',
+      font_family: 'Arial'
     });
   };
 
@@ -215,7 +223,7 @@ const FamilyMembers = ({ onMemberChange }) => {
           </div>
         </div>
 
-        <div className="form-row">
+        <div className="form-row form-row-three">
           <div className="form-group">
             <label>Color</label>
             <div className="color-picker-container">
@@ -233,6 +241,36 @@ const FamilyMembers = ({ onMemberChange }) => {
                 className="color-input"
               />
             </div>
+          </div>
+          <div className="form-group">
+            <label>Font size (px)</label>
+            <input
+              type="number"
+              min="8"
+              max="32"
+              value={formData.font_size}
+              onChange={(e) => setFormData({ ...formData, font_size: e.target.value })}
+              placeholder="12"
+              className="font-size-input"
+            />
+          </div>
+          <div className="form-group">
+            <label>Font</label>
+            <select
+              value={formData.font_family}
+              onChange={(e) => setFormData({ ...formData, font_family: e.target.value })}
+              className="font-family-select"
+            >
+              <option value="Arial">Arial</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Helvetica">Helvetica</option>
+              <option value="serif">Serif</option>
+              <option value="sans-serif">Sans-serif</option>
+              <option value="cursive">Cursive</option>
+              <option value="monospace">Monospace</option>
+            </select>
           </div>
         </div>
 
@@ -253,13 +291,15 @@ const FamilyMembers = ({ onMemberChange }) => {
                 <th>Gender</th>
                 <th>Parent</th>
                 <th>Color</th>
+                <th>Font size</th>
+                <th>Font</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="no-data">No family members found</td>
+                  <td colSpan="9" className="no-data">No family members found</td>
                 </tr>
               ) : (
                 members.map(member => (
@@ -285,6 +325,8 @@ const FamilyMembers = ({ onMemberChange }) => {
                         <span className="color-code">{member.color || '—'}</span>
                       </div>
                     </td>
+                    <td>{member.font_size || '—'}</td>
+                    <td>{member.font_family || '—'}</td>
                     <td>
                       <button
                         className="btn-edit"

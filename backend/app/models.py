@@ -18,6 +18,8 @@ class Person(Base):
     gender = Column(String, nullable=False)  # Using String instead of Enum for simplicity
     parent_id = Column(Integer, ForeignKey("persons.id"), nullable=True)
     color = Column(String, nullable=True)  # Custom color for visualization (hex color code)
+    font_size = Column(String, nullable=True)  # e.g. "12", "14" (px)
+    font_family = Column(String, nullable=True)  # e.g. "Arial", "Georgia", "serif"
 
     # Self-referential relationship
     parent = relationship("Person", remote_side=[id], backref="children")

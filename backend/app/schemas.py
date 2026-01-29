@@ -9,6 +9,8 @@ class PersonBase(BaseModel):
     gender: str
     parent_id: Optional[int] = None
     color: Optional[str] = None  # Hex color code (e.g., "#4a90e2")
+    font_size: Optional[str] = None  # e.g. "12", "14" (px)
+    font_family: Optional[str] = None  # e.g. "Arial", "Georgia"
 
 class PersonCreate(PersonBase):
     pass

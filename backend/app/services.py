@@ -41,7 +41,9 @@ class FamilyTreeService:
             birth_date=person.birth_date,
             gender=person.gender,
             parent_id=person.parent_id,
-            color=person.color,  # Include color from database
+            color=person.color,
+            font_size=getattr(person, 'font_size', None),
+            font_family=getattr(person, 'font_family', None),
             generation=generation,
             children=[]
         )

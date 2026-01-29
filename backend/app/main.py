@@ -56,18 +56,22 @@ def create_person(person: schemas.PersonCreate, db: Session = Depends(database.g
                 birth_date = person_dict.get('birth_date')
                 gender = person_dict.get('gender')
                 color = person_dict.get('color') or None
+                font_size = person_dict.get('font_size') or None
+                font_family = person_dict.get('font_family') or None
                 
                 # Use raw SQL with proper parameter binding
                 result = db.execute(text("""
-                    INSERT INTO persons (id, first_name, last_name, birth_date, gender, parent_id, color)
-                    VALUES (0, :first_name, :last_name, :birth_date, :gender, NULL, :color)
-                    RETURNING id, first_name, last_name, birth_date, gender, parent_id, color
+                    INSERT INTO persons (id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family)
+                    VALUES (0, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family)
+                    RETURNING id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family
                 """), {
                     'first_name': first_name,
                     'last_name': last_name,
                     'birth_date': birth_date,
                     'gender': gender,
-                    'color': color
+                    'color': color,
+                    'font_size': font_size,
+                    'font_family': font_family
                 })
                 db.flush()
                 

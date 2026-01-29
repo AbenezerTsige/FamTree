@@ -48,6 +48,14 @@
   margin-bottom: 15px;
 }
 
+.form-row.form-row-three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.font-size-input {
+  max-width: 80px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
