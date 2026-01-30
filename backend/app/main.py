@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -10,10 +11,11 @@ from app.auth import hash_password, verify_password, create_access_token, decode
 app = FastAPI(title="Family Tree API")
 security = HTTPBearer(auto_error=False)
 
-# CORS middleware
+# CORS: set ALLOWED_ORIGINS in production (e.g. https://yourdomain.com)
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_origins=[o.strip() for o in _allowed_origins.split(",")] if _allowed_origins != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,7 +121,6 @@ def create_person(
     # If empty, assign ID 0; otherwise use auto-increment
     if person_dict.get('parent_id') is None:
         count = db.query(models.Person).count()
-        print(f"Creating root - current count: {count}")
         if count == 0:
             # Table is empty - create root with ID 0
             # Use raw SQL to bypass SQLAlchemy's auto-increment restriction
@@ -153,11 +154,8 @@ def create_person(
                 try:
                     db.execute(text("SELECT setval('persons_id_seq', 1, false)"))
                     db.flush()
-                    print(f"Sequence reset to 1 after creating root with ID 0")
-                except Exception as seq_err:
-                    print(f"Warning: Could not reset sequence: {seq_err}")
-                    import traceback
-                    print(traceback.format_exc())
+                except Exception:
+                    pass
                 
                 # Commit the transaction first
                 db.commit()
@@ -170,10 +168,7 @@ def create_person(
                 raise
             except Exception as e:
                 db.rollback()
-                import traceback
-                error_details = traceback.format_exc()
-                print(f"Error creating root person: {error_details}")
-                raise HTTPException(status_code=500, detail=f"Failed to create root person: {str(e)}")
+                raise HTTPException(status_code=500, detail="Failed to create root person")
         else:
             # Table has data - use auto-increment
             db_person = models.Person(**person_dict)
@@ -245,15 +240,9 @@ def delete_person(
         max_id = max_id_result.scalar()
         
         if max_id == -1:
-            # Table is empty - reset sequence to 1 (next value will be 1)
-            # We'll manually insert ID 0 when creating root in empty table
             db.execute(text("SELECT setval('persons_id_seq', 1, false)"))
-            print(f"Table is empty - sequence reset to 1")
         else:
-            # Reset the sequence to start from max_id + 1
-            # Use true to set the last_value, so next value will be max_id + 1
-            db.execute(text(f"SELECT setval('persons_id_seq', {max_id}, true)"))
-            print(f"Sequence reset to {max_id}, next value will be {max_id + 1}")
+            db.execute(text("SELECT setval('persons_id_seq', :max_id, true)"), {"max_id": max_id})
         
         # Commit everything together (deletion + sequence reset)
         db.commit()

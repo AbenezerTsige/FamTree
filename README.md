@@ -7,8 +7,9 @@ A Dockerized web application that visualizes a family tree as a circular fan cha
 - **Circular Fan Chart Visualization**: Family tree displayed as a radial chart with the oldest member at the center
 - **Generation-based Layout**: Each outer ring represents a younger generation
 - **Sibling Support**: Siblings appear on the same circular ring
-- **RESTful API**: FastAPI backend with endpoints for fetching family tree data
-- **Auto-initialization**: Database automatically creates and seeds with sample data on first startup
+- **Authentication**: Login, registration, and password change (JWT)
+- **RESTful API**: FastAPI backend; tree and person endpoints require login
+- **Auto-initialization**: Database migrations and seed (sample data + default user) on first startup
 - **Docker-based**: Fully containerized for easy deployment
 
 ## Architecture
@@ -32,20 +33,17 @@ A Dockerized web application that visualizes a family tree as a circular fan cha
 
 2. **Start the application**:
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
 3. **Access the application**:
-   - Frontend: http://localhost
+   - Frontend: http://localhost (login required)
    - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
+   - API docs: http://localhost:8000/docs
 
-The application will automatically:
-- Create the PostgreSQL database
-- Run database migrations
-- Seed the database with sample family data
-- Start the backend API server
-- Serve the frontend application
+4. **Default login** (created on first seed): username **admin**, password **admin**. Change the password after first login (Settings).
+
+The application will automatically run migrations, seed sample family data and the default user, then start the API and frontend.
 
 ## Project Structure
 
@@ -54,6 +52,7 @@ FamTree/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
+│   │   ├── auth.py              # Password hashing and JWT
 │   │   ├── database.py          # Database connection and session
 │   │   ├── models.py            # SQLAlchemy models
 │   │   ├── schemas.py           # Pydantic schemas
@@ -78,37 +77,26 @@ FamTree/
 │   ├── package.json
 │   ├── Dockerfile               # Frontend container definition
 │   └── nginx.conf               # Nginx configuration
-├── docker-compose.yml           # Multi-container orchestration
+├── docker-compose.yml           # Compose (dev: volume + reload)
+├── docker-compose.prod.yml      # Production overrides (no mount, no reload)
+├── .env.example                 # Example env vars; copy to .env for production
 └── README.md
 ```
 
 ## API Endpoints
 
-### GET `/api/tree`
-Returns the entire family tree formatted for fan chart visualization.
+All tree and person endpoints require `Authorization: Bearer <token>` (obtain token via login).
 
-**Response**: JSON object with nested tree structure including:
-- Person details (id, name, birth_date, gender)
-- Children relationships
-- Generation information
-- Position data (x, y, angle, radius)
+- **POST /api/auth/register** – Create account. Body: `{ "username", "password" }`
+- **POST /api/auth/login** – Login. Body: `{ "username", "password" }`. Returns `access_token`, `username`
+- **POST /api/auth/change-password** – Change password (auth required). Body: `{ "current_password", "new_password" }`
 
-### GET `/api/persons`
-Returns all persons in the database.
+**Protected (require JWT):**
 
-### POST `/api/persons`
-Creates a new person in the database.
-
-**Request Body**:
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "birth_date": "1990-01-01",
-  "gender": "male",
-  "parent_id": null
-}
-```
+- **GET /api/tree** – Family tree for fan chart (nested structure with children, positions)
+- **GET /api/persons** – List all persons
+- **POST /api/persons** – Create person. Body: `{ "first_name", "last_name", "birth_date", "gender", "parent_id" }`
+- **GET /api/persons/{id}**, **PUT /api/persons/{id}**, **DELETE /api/persons/{id}** – Get, update, delete person
 
 ## Database Schema
 
@@ -132,45 +120,35 @@ Creates a new person in the database.
    - Gray circles = Other/Unknown
    - Lines connect parents to children
 
-## Deployment on Server
+## Deployment (Production)
 
-The same Docker setup works for both development and production. To deploy on a server:
-
-1. **Copy the project to your server**:
+1. **Copy the project to your server** and create a `.env` from the example:
    ```bash
-   scp -r FamTree user@your-server:/path/to/deployment
+   cp .env.example .env
+   # Edit .env: set SECRET_KEY (long random string), strong POSTGRES_PASSWORD, and ALLOWED_ORIGINS
    ```
 
-2. **SSH into your server**:
+2. **Set production environment variables** (in `.env` or your host):
+   - **SECRET_KEY** – Required. Use a long random string (e.g. `openssl rand -hex 32`).
+   - **POSTGRES_PASSWORD** – Use a strong password.
+   - **ALLOWED_ORIGINS** – Comma-separated origins, e.g. `https://yourdomain.com` (no trailing slash). Use `*` only for dev.
+
+3. **Run in production mode** (no source mount, no reload):
    ```bash
-   ssh user@your-server
-   cd /path/to/deployment/FamTree
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
    ```
 
-3. **Start the application**:
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Configure reverse proxy** (optional, for custom domain):
-   - Set up Nginx or Apache to proxy requests to `localhost:80`
-   - Configure SSL certificates if needed
-
-5. **Environment Variables** (optional):
-   You can customize the database connection by setting environment variables:
-   ```bash
-   export DATABASE_URL=postgresql://user:pass@db:5432/dbname
-   ```
+4. **Reverse proxy and SSL**: Put Nginx or Caddy in front of the app, proxy to `localhost:80`, and add TLS (e.g. Let’s Encrypt). The frontend container already serves the app and proxies `/api` to the backend.
 
 ## Stopping the Application
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 To also remove volumes (database data):
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Troubleshooting
@@ -191,7 +169,7 @@ docker-compose down -v
 ### Running Backend Only
 ```bash
 cd backend
-docker-compose up db
+docker compose up db -d
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt

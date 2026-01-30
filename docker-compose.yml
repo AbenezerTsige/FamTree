@@ -1,19 +1,18 @@
-version: '3.8'
-
+# Development: uses volume mount and --reload. For production use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
   db:
     image: postgres:15-alpine
     container_name: famtree_db
     environment:
-      POSTGRES_USER: famtree_user
-      POSTGRES_PASSWORD: famtree_pass
-      POSTGRES_DB: famtree_db
+      POSTGRES_USER: ${POSTGRES_USER:-famtree_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-famtree_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-famtree_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U famtree_user -d famtree_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-famtree_user} -d ${POSTGRES_DB:-famtree_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,7 +23,9 @@ services:
       dockerfile: Dockerfile
     container_name: famtree_backend
     environment:
-      DATABASE_URL: postgresql://famtree_user:famtree_pass@db:5432/famtree_db
+      DATABASE_URL: ${DATABASE_URL:-postgresql://famtree_user:famtree_pass@db:5432/famtree_db}
+      SECRET_KEY: ${SECRET_KEY:-famtree-secret-key-change-in-production}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
     ports:
       - "8000:8000"
     depends_on:
