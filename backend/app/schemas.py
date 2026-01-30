@@ -33,3 +33,25 @@ class PersonTree(PersonResponse):
         from_attributes = True
 
 PersonTree.model_rebuild()
+
+
+# Auth schemas
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str

@@ -1,0 +1,124 @@
+.settings-page {
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%);
+}
+
+.settings-card {
+  max-width: 480px;
+  margin: 0 auto;
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-back {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #4169e1;
+  text-decoration: none;
+}
+
+.settings-back:hover {
+  text-decoration: underline;
+}
+
+.settings-card h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #e0e0e0;
+}
+
+.settings-user {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.settings-user strong {
+  color: #e0e0e0;
+}
+
+.settings-section {
+  margin-top: 24px;
+}
+
+.settings-section h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.settings-section .form-group {
+  margin-bottom: 16px;
+}
+
+.settings-section .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+}
+
+.settings-section .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  box-sizing: border-box;
+}
+
+.settings-section .form-group input:focus {
+  outline: none;
+  border-color: #4169e1;
+  box-shadow: 0 0 0 2px rgba(65, 105, 225, 0.2);
+}
+
+.settings-error {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  border-radius: 6px;
+  color: #f88;
+  font-size: 14px;
+}
+
+.settings-message {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: rgba(40, 167, 69, 0.15);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  border-radius: 6px;
+  color: #6c8;
+  font-size: 14px;
+}
+
+.btn-save {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: #4169e1;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #3151c1;
+}
+
+.btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

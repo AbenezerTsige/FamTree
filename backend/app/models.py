@@ -23,3 +23,11 @@ class Person(Base):
 
     # Self-referential relationship
     parent = relationship("Person", remote_side=[id], backref="children")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)

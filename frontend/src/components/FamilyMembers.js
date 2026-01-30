@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders } from '../context/AuthContext';
 import './FamilyMembers.css';
 
 const FamilyMembers = ({ onMemberChange }) => {
@@ -21,7 +22,7 @@ const FamilyMembers = ({ onMemberChange }) => {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/api/persons`);
+      const response = await fetch(`${apiUrl}/api/persons`, { headers: getAuthHeaders() });
       if (!response.ok) throw new Error('Failed to fetch members');
       const data = await response.json();
       setMembers(data);
@@ -50,10 +51,9 @@ const FamilyMembers = ({ onMemberChange }) => {
       };
 
       if (editingId) {
-        // Update existing member
         const response = await fetch(`${apiUrl}/api/persons/${editingId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify(submitData)
         });
         if (!response.ok) {
@@ -61,10 +61,9 @@ const FamilyMembers = ({ onMemberChange }) => {
           throw new Error(errorData.detail || 'Failed to update member');
         }
       } else {
-        // Create new member
         const response = await fetch(`${apiUrl}/api/persons`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify(submitData)
         });
         if (!response.ok) {
@@ -105,7 +104,8 @@ const FamilyMembers = ({ onMemberChange }) => {
     try {
       setError(null);
       const response = await fetch(`${apiUrl}/api/persons/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       
       if (!response.ok) {

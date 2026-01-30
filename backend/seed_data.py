@@ -1,9 +1,10 @@
 """
-Seed the database with sample family tree data
+Seed the database with sample family tree data and default login user.
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models import Person, Base
+from app.models import Person, Base, User
+from app.auth import hash_password
 from datetime import date
 import os
 
@@ -11,6 +12,9 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://famtree_user:famtree_pass@db:5432/famtree_db"
 )
+
+DEFAULT_USERNAME = "admin"
+DEFAULT_PASSWORD = "admin"
 
 def seed_database():
     engine = create_engine(DATABASE_URL)
@@ -20,7 +24,17 @@ def seed_database():
     db = SessionLocal()
     
     try:
-        # Check if data already exists
+        # Create default user (admin/admin) if no users exist
+        if db.query(User).count() == 0:
+            default_user = User(
+                username=DEFAULT_USERNAME,
+                password_hash=hash_password(DEFAULT_PASSWORD),
+            )
+            db.add(default_user)
+            db.commit()
+            print(f"Default user created: username={DEFAULT_USERNAME}, password={DEFAULT_PASSWORD}")
+
+        # Check if person data already exists
         if db.query(Person).count() > 0:
             print("Database already seeded. Skipping seed data.")
             return
