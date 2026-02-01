@@ -151,6 +151,29 @@
   background-color: #1b5e20;
 }
 
+.btn-edit-root {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #5c6bc0;
+  color: white;
+}
+
+.btn-edit-root:hover {
+  background-color: #3949ab;
+}
+
+.root-badge {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(92, 107, 192, 0.4);
+  border-radius: 4px;
+}
+
 .members-list {
   margin-top: 30px;
 }

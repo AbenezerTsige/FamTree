@@ -149,6 +149,11 @@ const FamilyMembers = ({ onMemberChange }) => {
     return member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name;
   };
 
+  const rootMember = members.find(m => m.parent_id == null);
+  const handleEditRoot = () => {
+    if (rootMember) handleEdit(rootMember);
+  };
+
   if (loading) {
     return <div className="loading">Loading family members...</div>;
   }
@@ -162,6 +167,14 @@ const FamilyMembers = ({ onMemberChange }) => {
             <button type="submit" form="member-form" className="btn-update-member">
               Update Member
             </button>
+          )}
+          {rootMember && !editingId && (
+            <button type="button" className="btn-edit-root" onClick={handleEditRoot} title="Edit the root (center) member">
+              Update root member
+            </button>
+          )}
+          {rootMember && editingId && editingId === rootMember.id && (
+            <span className="root-badge">Editing root</span>
           )}
           <button type="button" className="btn-update" onClick={onMemberChange} title="Update Dashboard">
             Update Dashboard
