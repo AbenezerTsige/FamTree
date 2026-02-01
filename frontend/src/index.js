@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import App from './App';
 import Login from './components/Login';
 import Settings from './components/Settings';
+import Admin from './components/Admin';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, ready } = useAuth();
@@ -34,6 +35,14 @@ root.render(
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Admin />
               </ProtectedRoute>
             }
           />

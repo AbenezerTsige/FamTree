@@ -60,6 +60,19 @@
   background: rgba(65, 105, 225, 0.15);
 }
 
+.btn-admin {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: #9b59b6;
+  text-decoration: none;
+  border-radius: 4px;
+  border: 1px solid rgba(155, 89, 182, 0.5);
+}
+
+.btn-admin:hover {
+  background: rgba(155, 89, 182, 0.15);
+}
+
 .btn-logout {
   padding: 8px 16px;
   font-size: 0.9rem;

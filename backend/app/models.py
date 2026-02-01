@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Date, Float, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -12,6 +12,7 @@ class Person(Base):
     __tablename__ = "persons"
 
     id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # User who owns this family tree
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=True)  # Optional, can be empty
     birth_date = Column(Date, nullable=False)
@@ -34,3 +35,4 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     password_hash = Column(String, nullable=False)
+    is_admin = Column(Boolean, nullable=False, default=False)  # Admin can create users and manage accounts

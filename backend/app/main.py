@@ -38,6 +38,14 @@ def get_current_user(
     return user
 
 
+def get_current_admin(
+    current_user: models.User = Depends(get_current_user),
+) -> models.User:
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin only")
+    return current_user
+
+
 @app.get("/")
 def read_root():
     return {"message": "Family Tree API"}
@@ -84,26 +92,63 @@ def change_password(
     return {"message": "Password updated successfully"}
 
 
-# ----- Protected API (require login) -----
+@app.get("/api/auth/me", response_model=schemas.MeResponse)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    """Return current user info (username, is_admin)."""
+    return {"username": current_user.username, "is_admin": getattr(current_user, "is_admin", False)}
+
+
+# ----- Admin only -----
+@app.post("/api/admin/users", response_model=schemas.UserResponse)
+def admin_create_user(
+    data: schemas.UserCreate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    """Create a new user account (admin only)."""
+    if db.query(models.User).filter(models.User.username == data.username).first():
+        raise HTTPException(status_code=400, detail="Username already registered")
+    user = models.User(
+        username=data.username,
+        password_hash=hash_password(data.password),
+        is_admin=False,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.get("/api/admin/users", response_model=List[schemas.UserResponse])
+def admin_list_users(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    """List all users (admin only)."""
+    return db.query(models.User).all()
+
+
+# ----- Protected API (require login, scoped to owner) -----
 @app.get("/api/tree", response_model=schemas.PersonTree)
 def get_family_tree(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Get the entire family tree formatted for fan chart visualization"""
-    service = FamilyTreeService(db)
+    """Get the current user's family tree."""
+    service = FamilyTreeService(db, owner_id=current_user.id)
     tree = service.build_tree()
     if not tree:
         raise HTTPException(status_code=404, detail="No family tree data found")
     return tree
+
 
 @app.get("/api/persons", response_model=List[schemas.PersonResponse])
 def get_all_persons(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Get all persons in the database"""
-    persons = db.query(models.Person).all()
+    """Get all persons owned by the current user."""
+    persons = db.query(models.Person).filter(models.Person.owner_id == current_user.id).all()
     return persons
 
 @app.post("/api/persons", response_model=schemas.PersonResponse)
@@ -112,15 +157,15 @@ def create_person(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Create a new person"""
+    """Create a new person (owned by current user)."""
     from sqlalchemy import text
-    
+
     person_dict = person.dict()
-    
-    # If this is a root/founder (no parent), check if table is empty
-    # If empty, assign ID 0; otherwise use auto-increment
-    if person_dict.get('parent_id') is None:
-        count = db.query(models.Person).count()
+    person_dict["owner_id"] = current_user.id
+
+    # If this is a root/founder (no parent), check if this owner's tree is empty
+    if person_dict.get("parent_id") is None:
+        count = db.query(models.Person).filter(models.Person.owner_id == current_user.id).count()
         if count == 0:
             # Table is empty - create root with ID 0
             # Use raw SQL to bypass SQLAlchemy's auto-increment restriction
@@ -135,13 +180,15 @@ def create_person(
                 font_color = person_dict.get('font_color') or None
                 label_offset_x = person_dict.get('label_offset_x')
                 label_offset_y = person_dict.get('label_offset_y')
-                
+                owner_id = current_user.id
+
                 # Use raw SQL with proper parameter binding
                 result = db.execute(text("""
-                    INSERT INTO persons (id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y)
-                    VALUES (0, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family, :font_color, :label_offset_x, :label_offset_y)
-                    RETURNING id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y
+                    INSERT INTO persons (id, owner_id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y)
+                    VALUES (0, :owner_id, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family, :font_color, :label_offset_x, :label_offset_y)
+                    RETURNING id, owner_id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y
                 """), {
+                    'owner_id': owner_id,
                     'first_name': first_name,
                     'last_name': last_name,
                     'birth_date': birth_date,
@@ -167,7 +214,7 @@ def create_person(
                 db.commit()
                 
                 # Now query the created person from the database (it's now in the session)
-                db_person = db.query(models.Person).filter(models.Person.id == 0).first()
+                db_person = db.query(models.Person).filter(models.Person.id == 0, models.Person.owner_id == current_user.id).first()
                 if not db_person:
                     raise HTTPException(status_code=500, detail="Failed to create root person - could not retrieve created record")
             except HTTPException:
@@ -176,7 +223,7 @@ def create_person(
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to create root person")
         else:
-            # Table has data - use auto-increment
+            # This owner has data - use auto-increment
             db_person = models.Person(**person_dict)
             db.add(db_person)
             db.commit()
@@ -187,8 +234,20 @@ def create_person(
         db.add(db_person)
         db.commit()
         db.refresh(db_person)
-    
+
     return db_person
+
+
+def _require_owner(db: Session, person_id: int, current_user: models.User) -> models.Person:
+    """Return person if owned by current user; else 404."""
+    db_person = db.query(models.Person).filter(
+        models.Person.id == person_id,
+        models.Person.owner_id == current_user.id,
+    ).first()
+    if not db_person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    return db_person
+
 
 @app.get("/api/persons/{person_id}", response_model=schemas.PersonResponse)
 def get_person(
@@ -196,11 +255,9 @@ def get_person(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Get a specific person by ID"""
-    person = db.query(models.Person).filter(models.Person.id == person_id).first()
-    if not person:
-        raise HTTPException(status_code=404, detail="Person not found")
-    return person
+    """Get a specific person by ID (must be owned by current user)."""
+    return _require_owner(db, person_id, current_user)
+
 
 @app.put("/api/persons/{person_id}", response_model=schemas.PersonResponse)
 def update_person(
@@ -209,17 +266,15 @@ def update_person(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Update a person"""
-    db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
-    if not db_person:
-        raise HTTPException(status_code=404, detail="Person not found")
-    
+    """Update a person (must be owned by current user)."""
+    db_person = _require_owner(db, person_id, current_user)
     for key, value in person.dict().items():
-        setattr(db_person, key, value)
-    
+        if key != "owner_id":
+            setattr(db_person, key, value)
     db.commit()
     db.refresh(db_person)
     return db_person
+
 
 @app.delete("/api/persons/{person_id}")
 def delete_person(
@@ -227,12 +282,10 @@ def delete_person(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Delete a person and all their descendants (cascade delete), then reset ID sequence"""
+    """Delete a person and all their descendants (must be owned by current user)."""
     from sqlalchemy import text
-    
-    db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
-    if not db_person:
-        raise HTTPException(status_code=404, detail="Person not found")
+
+    db_person = _require_owner(db, person_id, current_user)
     
     try:
         # Delete the person - CASCADE DELETE will automatically delete all descendants

@@ -13,7 +13,7 @@ function App() {
   const [treeData, setTreeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { logout, username } = useAuth();
+  const { logout, username, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const fetchFamilyTree = async () => {
@@ -75,6 +75,9 @@ function App() {
         </div>
         <div className="header-right">
           <span className="header-user">{username}</span>
+          {isAdmin && (
+            <Link to="/admin" className="btn-admin">Admin</Link>
+          )}
           <Link to="/settings" className="btn-settings">Settings</Link>
           <button type="button" className="btn-logout" onClick={handleLogout}>
             Logout

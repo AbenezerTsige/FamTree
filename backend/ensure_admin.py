@@ -23,13 +23,14 @@ def main():
         user = db.query(User).filter(User.username == ADMIN_USERNAME).first()
         if user:
             user.password_hash = hash_password(ADMIN_PASSWORD)
+            user.is_admin = True
             db.commit()
-            print(f"Password reset for user '{ADMIN_USERNAME}'.")
+            print(f"Password reset for user '{ADMIN_USERNAME}' (admin).")
         else:
-            user = User(username=ADMIN_USERNAME, password_hash=hash_password(ADMIN_PASSWORD))
+            user = User(username=ADMIN_USERNAME, password_hash=hash_password(ADMIN_PASSWORD), is_admin=True)
             db.add(user)
             db.commit()
-            print(f"User '{ADMIN_USERNAME}' created.")
+            print(f"User '{ADMIN_USERNAME}' created (admin).")
         print(f"Login with username: {ADMIN_USERNAME}, password: {ADMIN_PASSWORD}")
     finally:
         db.close()

@@ -58,3 +58,17 @@ class Token(BaseModel):
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_admin: bool
+
+    class Config:
+        from_attributes = True
+
+
+class MeResponse(BaseModel):
+    username: str
+    is_admin: bool

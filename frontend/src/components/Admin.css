@@ -1,0 +1,131 @@
+.admin-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.btn-back {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-intro {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.admin-error {
+  padding: 12px;
+  background: rgba(200, 80, 80, 0.2);
+  border: 1px solid rgba(200, 80, 80, 0.5);
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.admin-create {
+  margin-bottom: 32px;
+}
+
+.admin-create h2,
+.admin-list h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+}
+
+.admin-form .form-group {
+  margin-bottom: 12px;
+}
+
+.admin-form .form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.admin-form input {
+  width: 100%;
+  max-width: 260px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+
+.btn-create {
+  padding: 10px 20px;
+  background: #4169e1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.btn-create:hover:not(:disabled) {
+  background: #3151c1;
+}
+
+.btn-create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.create-message {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-table th {
+  background: rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.admin-table .no-data {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 20px;
+}
+
+.admin-list .loading {
+  color: rgba(255, 255, 255, 0.6);
+}

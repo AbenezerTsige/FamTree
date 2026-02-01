@@ -29,19 +29,30 @@ def seed_database():
             default_user = User(
                 username=DEFAULT_USERNAME,
                 password_hash=hash_password(DEFAULT_PASSWORD),
+                is_admin=True,
             )
             db.add(default_user)
             db.commit()
-            print(f"Default user created: username={DEFAULT_USERNAME}, password={DEFAULT_PASSWORD}")
+            db.refresh(default_user)
+            print(f"Default user created: username={DEFAULT_USERNAME}, password={DEFAULT_PASSWORD} (admin)")
+
+        # Owner for seeded persons: first user (admin)
+        owner = db.query(User).order_by(User.id).first()
+        owner_id = owner.id if owner else None
 
         # Check if person data already exists
         if db.query(Person).count() > 0:
             print("Database already seeded. Skipping seed data.")
             return
-        
-        # Create sample family tree
+
+        if not owner_id:
+            print("No user to own seeded data. Skipping seed data.")
+            return
+
+        # Create sample family tree (owned by first user)
         # Generation 0 (Oldest - Center)
         great_grandfather = Person(
+            owner_id=owner_id,
             first_name="John",
             last_name="Smith",
             birth_date=date(1920, 1, 15),
@@ -53,6 +64,7 @@ def seed_database():
         
         # Generation 1
         grandfather = Person(
+            owner_id=owner_id,
             first_name="Robert",
             last_name="Smith",
             birth_date=date(1945, 3, 20),
@@ -63,6 +75,7 @@ def seed_database():
         db.flush()
         
         uncle = Person(
+            owner_id=owner_id,
             first_name="Michael",
             last_name="Smith",
             birth_date=date(1947, 6, 10),
@@ -73,6 +86,7 @@ def seed_database():
         db.flush()
         
         aunt = Person(
+            owner_id=owner_id,
             first_name="Sarah",
             last_name="Smith",
             birth_date=date(1950, 9, 5),
@@ -84,6 +98,7 @@ def seed_database():
         
         # Generation 2
         father = Person(
+            owner_id=owner_id,
             first_name="David",
             last_name="Smith",
             birth_date=date(1970, 4, 12),
@@ -94,6 +109,7 @@ def seed_database():
         db.flush()
         
         uncle2 = Person(
+            owner_id=owner_id,
             first_name="James",
             last_name="Smith",
             birth_date=date(1972, 8, 25),
@@ -104,6 +120,7 @@ def seed_database():
         db.flush()
         
         cousin1 = Person(
+            owner_id=owner_id,
             first_name="Emma",
             last_name="Smith",
             birth_date=date(1975, 11, 3),
@@ -114,6 +131,7 @@ def seed_database():
         db.flush()
         
         cousin2 = Person(
+            owner_id=owner_id,
             first_name="Oliver",
             last_name="Smith",
             birth_date=date(1978, 2, 18),
@@ -125,6 +143,7 @@ def seed_database():
         
         # Generation 3
         me = Person(
+            owner_id=owner_id,
             first_name="Alex",
             last_name="Smith",
             birth_date=date(1995, 7, 30),
@@ -135,6 +154,7 @@ def seed_database():
         db.flush()
         
         sibling = Person(
+            owner_id=owner_id,
             first_name="Sophia",
             last_name="Smith",
             birth_date=date(1998, 12, 15),
@@ -145,6 +165,7 @@ def seed_database():
         db.flush()
         
         cousin3 = Person(
+            owner_id=owner_id,
             first_name="Lucas",
             last_name="Smith",
             birth_date=date(2000, 5, 22),
@@ -156,6 +177,7 @@ def seed_database():
         
         # Generation 4 (Youngest)
         nephew = Person(
+            owner_id=owner_id,
             first_name="Noah",
             last_name="Smith",
             birth_date=date(2020, 3, 10),
@@ -166,6 +188,7 @@ def seed_database():
         db.flush()
         
         niece = Person(
+            owner_id=owner_id,
             first_name="Ava",
             last_name="Smith",
             birth_date=date(2022, 9, 5),

@@ -5,26 +5,35 @@ from datetime import datetime
 import math
 
 class FamilyTreeService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, owner_id: Optional[int] = None):
         self.db = db
+        self.owner_id = owner_id
+
+    def _owner_filter(self):
+        """Query filter for current owner's persons."""
+        if self.owner_id is None:
+            return models.Person.owner_id.is_(None)  # Legacy: no owner
+        return models.Person.owner_id == self.owner_id
 
     def find_root(self) -> Optional[models.Person]:
-        """Find the oldest person (root of the tree)"""
-        # Find person with no parent (oldest generation)
-        root = self.db.query(models.Person).filter(models.Person.parent_id == None).first()
-        
+        """Find the oldest person (root of the tree) for the current owner."""
+        base = self.db.query(models.Person).filter(self._owner_filter())
+        root = base.filter(models.Person.parent_id == None).first()
         if not root:
-            # If no root found, find the person with earliest birth date
-            root = self.db.query(models.Person).order_by(models.Person.birth_date.asc()).first()
-        
+            root = base.order_by(models.Person.birth_date.asc()).first()
         return root
 
     def get_children(self, person_id: int) -> List[models.Person]:
-        """Get all children of a person"""
-        return self.db.query(models.Person).filter(models.Person.parent_id == person_id).order_by(models.Person.birth_date.asc()).all()
+        """Get all children of a person (same owner)."""
+        return (
+            self.db.query(models.Person)
+            .filter(self._owner_filter(), models.Person.parent_id == person_id)
+            .order_by(models.Person.birth_date.asc())
+            .all()
+        )
 
     def build_tree(self, person: Optional[models.Person] = None, generation: int = 0) -> Optional[schemas.PersonTree]:
-        """Build the family tree structure with positioning data for fan chart"""
+        """Build the family tree structure with positioning data for fan chart."""
         if person is None:
             person = self.find_root()
             if not person:
