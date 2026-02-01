@@ -22,7 +22,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: famtree_backend
-    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://famtree_user:famtree_pass@db:5432/famtree_db}
       SECRET_KEY: ${SECRET_KEY:-famtree-secret-key-change-in-production}
