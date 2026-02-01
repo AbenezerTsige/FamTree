@@ -120,10 +120,11 @@ const FamilyTreeChart = ({ data }) => {
       tx += offsetX;
       ty += offsetY;
 
-      // Rotation math: follow arc + user offset (textRotationDeg from closure)
+      // Rotation math: follow arc + global offset + per-person label_rotation
       let rotation = (node.midAngle * 180 / Math.PI);
       if (rotation > 90 && rotation < 270) rotation -= 180; // Flip for readability
       rotation += textRotationDeg;
+      rotation += Number(node.label_rotation) || 0;
 
       const grp = g.append('g').attr('transform', `translate(${tx},${ty}) rotate(${rotation})`);
       const fontSize = node.font_size ? `${node.font_size}px` : (node.depth === 0 ? '12px' : '12px');
@@ -172,7 +173,7 @@ const FamilyTreeChart = ({ data }) => {
           title="Rotate all labels by this many degrees"
         />
       </div>
-      <div ref={containerRef} className="chart-container" style={{ width: '100%', height: '100vh', background: '#000' }}>
+      <div ref={containerRef} className="chart-container">
         <svg ref={svgRef} />
       </div>
     </div>

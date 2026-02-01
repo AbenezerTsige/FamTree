@@ -17,7 +17,8 @@ const FamilyMembers = ({ onMemberChange }) => {
     font_family: 'Arial',
     font_color: '#ffffff',
     label_offset_x: '',
-    label_offset_y: ''
+    label_offset_y: '',
+    label_rotation: ''
   });
 
   const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
@@ -53,7 +54,8 @@ const FamilyMembers = ({ onMemberChange }) => {
         font_family: formData.font_family || null,
         font_color: formData.font_color || null,
         label_offset_x: formData.label_offset_x !== '' && formData.label_offset_x !== undefined ? parseFloat(formData.label_offset_x) : null,
-        label_offset_y: formData.label_offset_y !== '' && formData.label_offset_y !== undefined ? parseFloat(formData.label_offset_y) : null
+        label_offset_y: formData.label_offset_y !== '' && formData.label_offset_y !== undefined ? parseFloat(formData.label_offset_y) : null,
+        label_rotation: formData.label_rotation !== '' && formData.label_rotation !== undefined ? parseFloat(formData.label_rotation) : null
       };
 
       if (editingId) {
@@ -98,7 +100,8 @@ const FamilyMembers = ({ onMemberChange }) => {
       font_family: member.font_family || 'Arial',
       font_color: member.font_color || '#ffffff',
       label_offset_x: member.label_offset_x != null ? String(member.label_offset_x) : '',
-      label_offset_y: member.label_offset_y != null ? String(member.label_offset_y) : ''
+      label_offset_y: member.label_offset_y != null ? String(member.label_offset_y) : '',
+      label_rotation: member.label_rotation != null ? String(member.label_rotation) : ''
     });
   };
 
@@ -147,7 +150,8 @@ const FamilyMembers = ({ onMemberChange }) => {
       font_family: 'Arial',
       font_color: '#ffffff',
       label_offset_x: '',
-      label_offset_y: ''
+      label_offset_y: '',
+      label_rotation: ''
     });
   };
 
@@ -346,6 +350,18 @@ const FamilyMembers = ({ onMemberChange }) => {
               className="label-offset-input"
             />
             <span className="form-hint">− up, + down</span>
+          </div>
+          <div className="form-group">
+            <label title="Extra rotation in degrees">Label rotation (deg)</label>
+            <input
+              type="number"
+              step="1"
+              value={formData.label_rotation}
+              onChange={(e) => setFormData({ ...formData, label_rotation: e.target.value })}
+              placeholder="0"
+              className="label-offset-input"
+            />
+            <span className="form-hint">Per-person rotation</span>
           </div>
         </div>
 

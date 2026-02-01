@@ -14,6 +14,7 @@ class PersonBase(BaseModel):
     font_color: Optional[str] = None  # Text/label color (hex, e.g. "#ffffff")
     label_offset_x: Optional[float] = None  # Label position offset px: negative=left, positive=right
     label_offset_y: Optional[float] = None  # Label position offset px: negative=up, positive=down
+    label_rotation: Optional[float] = None  # Label rotation in degrees (added to arc-following rotation)
 
 class PersonCreate(PersonBase):
     pass

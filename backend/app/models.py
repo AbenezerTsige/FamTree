@@ -24,6 +24,7 @@ class Person(Base):
     font_color = Column(String, nullable=True)  # Text/label color (hex, e.g. "#ffffff")
     label_offset_x = Column(Float, nullable=True)  # Label position offset in px: negative=left, positive=right
     label_offset_y = Column(Float, nullable=True)  # Label position offset in px: negative=up, positive=down
+    label_rotation = Column(Float, nullable=True)  # Label rotation in degrees (added to arc-following rotation)
 
     # Self-referential relationship
     parent = relationship("Person", remote_side=[id], backref="children")
