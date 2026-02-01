@@ -45,6 +45,14 @@ const FamilyTreeChart = ({ data }) => {
 
     const tree = JSON.parse(JSON.stringify(data));
 
+    // Subtree size = 1 + all descendants (used to allocate more angle to bigger branches)
+    function assignSubtreeSizes(node) {
+      const childSum = (node.children || []).reduce((sum, c) => sum + assignSubtreeSizes(c), 0);
+      node.subtreeSize = 1 + childSum;
+      return node.subtreeSize;
+    }
+    assignSubtreeSizes(tree);
+
     function layout(node, depth, parentStart, parentEnd, branchIdx) {
       node.depth = depth;
       node.branchIndex = branchIdx ?? 0;
@@ -65,10 +73,13 @@ const FamilyTreeChart = ({ data }) => {
       } else {
         const children = node.parentNode.children || [];
         const idx = children.indexOf(node);
-        const step = (parentEnd - parentStart) / children.length;
-        node.startAngle = parentStart + idx * step;
-        node.endAngle = parentStart + (idx + 1) * step;
-        node.midAngle = node.startAngle + (step / 2);
+        const totalSize = children.reduce((sum, c) => sum + (c.subtreeSize || 1), 0);
+        const startSize = children.slice(0, idx).reduce((sum, c) => sum + (c.subtreeSize || 1), 0);
+        const endSize = startSize + (node.subtreeSize || 1);
+        const span = parentEnd - parentStart;
+        node.startAngle = parentStart + span * (startSize / totalSize);
+        node.endAngle = parentStart + span * (endSize / totalSize);
+        node.midAngle = (node.startAngle + node.endAngle) / 2;
       }
 
       if (node.children) {
