@@ -45,6 +45,8 @@ class FamilyTreeService:
             font_size=getattr(person, 'font_size', None),
             font_family=getattr(person, 'font_family', None),
             font_color=getattr(person, 'font_color', None),
+            label_offset_x=getattr(person, 'label_offset_x', None),
+            label_offset_y=getattr(person, 'label_offset_y', None),
             generation=generation,
             children=[]
         )

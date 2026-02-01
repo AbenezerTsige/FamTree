@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -21,6 +21,8 @@ class Person(Base):
     font_size = Column(String, nullable=True)  # e.g. "12", "14" (px)
     font_family = Column(String, nullable=True)  # e.g. "Arial", "Georgia", "serif"
     font_color = Column(String, nullable=True)  # Text/label color (hex, e.g. "#ffffff")
+    label_offset_x = Column(Float, nullable=True)  # Label position offset in px: negative=left, positive=right
+    label_offset_y = Column(Float, nullable=True)  # Label position offset in px: negative=up, positive=down
 
     # Self-referential relationship
     parent = relationship("Person", remote_side=[id], backref="children")

@@ -12,6 +12,8 @@ class PersonBase(BaseModel):
     font_size: Optional[str] = None  # e.g. "12", "14" (px)
     font_family: Optional[str] = None  # e.g. "Arial", "Georgia"
     font_color: Optional[str] = None  # Text/label color (hex, e.g. "#ffffff")
+    label_offset_x: Optional[float] = None  # Label position offset px: negative=left, positive=right
+    label_offset_y: Optional[float] = None  # Label position offset px: negative=up, positive=down
 
 class PersonCreate(PersonBase):
     pass

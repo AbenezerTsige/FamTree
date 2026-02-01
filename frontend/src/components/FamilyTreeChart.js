@@ -112,8 +112,12 @@ const FamilyTreeChart = ({ data }) => {
       // Trig Math: D3 0 is Top. Standard Math 0 is Right. 
       // We subtract PI/2 to sync them.
       const angle = node.midAngle - Math.PI / 2;
-      const tx = r * Math.cos(angle);
-      const ty = r * Math.sin(angle);
+      let tx = r * Math.cos(angle);
+      let ty = r * Math.sin(angle);
+      const offsetX = Number(node.label_offset_x) || 0;
+      const offsetY = Number(node.label_offset_y) || 0;
+      tx += offsetX;
+      ty += offsetY;
 
       // Rotation math
       let rotation = (node.midAngle * 180 / Math.PI);

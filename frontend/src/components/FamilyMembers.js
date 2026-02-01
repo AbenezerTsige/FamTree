@@ -15,7 +15,9 @@ const FamilyMembers = ({ onMemberChange }) => {
     color: '#4a90e2',
     font_size: '12',
     font_family: 'Arial',
-    font_color: '#ffffff'
+    font_color: '#ffffff',
+    label_offset_x: '',
+    label_offset_y: ''
   });
 
   const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
@@ -49,7 +51,9 @@ const FamilyMembers = ({ onMemberChange }) => {
         parent_id: formData.parent_id && formData.parent_id !== 'none' ? parseInt(formData.parent_id) : null,
         font_size: formData.font_size || null,
         font_family: formData.font_family || null,
-        font_color: formData.font_color || null
+        font_color: formData.font_color || null,
+        label_offset_x: formData.label_offset_x !== '' && formData.label_offset_x !== undefined ? parseFloat(formData.label_offset_x) : null,
+        label_offset_y: formData.label_offset_y !== '' && formData.label_offset_y !== undefined ? parseFloat(formData.label_offset_y) : null
       };
 
       if (editingId) {
@@ -92,7 +96,9 @@ const FamilyMembers = ({ onMemberChange }) => {
       color: member.color || '#4a90e2',
       font_size: member.font_size || '12',
       font_family: member.font_family || 'Arial',
-      font_color: member.font_color || '#ffffff'
+      font_color: member.font_color || '#ffffff',
+      label_offset_x: member.label_offset_x != null ? String(member.label_offset_x) : '',
+      label_offset_y: member.label_offset_y != null ? String(member.label_offset_y) : ''
     });
   };
 
@@ -139,7 +145,9 @@ const FamilyMembers = ({ onMemberChange }) => {
       color: '#4a90e2',
       font_size: '12',
       font_family: 'Arial',
-      font_color: '#ffffff'
+      font_color: '#ffffff',
+      label_offset_x: '',
+      label_offset_y: ''
     });
   };
 
@@ -311,6 +319,33 @@ const FamilyMembers = ({ onMemberChange }) => {
               <option value="cursive">Cursive</option>
               <option value="monospace">Monospace</option>
             </select>
+          </div>
+        </div>
+
+        <div className="form-row form-row-label-offset">
+          <div className="form-group">
+            <label title="Negative = left, positive = right">Label offset X (px)</label>
+            <input
+              type="number"
+              step="0.5"
+              value={formData.label_offset_x}
+              onChange={(e) => setFormData({ ...formData, label_offset_x: e.target.value })}
+              placeholder="0"
+              className="label-offset-input"
+            />
+            <span className="form-hint">− left, + right</span>
+          </div>
+          <div className="form-group">
+            <label title="Negative = up, positive = down">Label offset Y (px)</label>
+            <input
+              type="number"
+              step="0.5"
+              value={formData.label_offset_y}
+              onChange={(e) => setFormData({ ...formData, label_offset_y: e.target.value })}
+              placeholder="0"
+              className="label-offset-input"
+            />
+            <span className="form-hint">− up, + down</span>
           </div>
         </div>
 

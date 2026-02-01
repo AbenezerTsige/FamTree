@@ -133,12 +133,14 @@ def create_person(
                 font_size = person_dict.get('font_size') or None
                 font_family = person_dict.get('font_family') or None
                 font_color = person_dict.get('font_color') or None
+                label_offset_x = person_dict.get('label_offset_x')
+                label_offset_y = person_dict.get('label_offset_y')
                 
                 # Use raw SQL with proper parameter binding
                 result = db.execute(text("""
-                    INSERT INTO persons (id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color)
-                    VALUES (0, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family, :font_color)
-                    RETURNING id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color
+                    INSERT INTO persons (id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y)
+                    VALUES (0, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family, :font_color, :label_offset_x, :label_offset_y)
+                    RETURNING id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y
                 """), {
                     'first_name': first_name,
                     'last_name': last_name,
@@ -147,7 +149,9 @@ def create_person(
                     'color': color,
                     'font_size': font_size,
                     'font_family': font_family,
-                    'font_color': font_color
+                    'font_color': font_color,
+                    'label_offset_x': label_offset_x,
+                    'label_offset_y': label_offset_y
                 })
                 db.flush()
                 
