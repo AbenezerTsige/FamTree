@@ -43,7 +43,7 @@ services:
       dockerfile: Dockerfile
     container_name: famtree_frontend
     ports:
-      - "9000:80"t
+      - "9000:80"
     restart: unless-stopped
     depends_on:
       - backend
