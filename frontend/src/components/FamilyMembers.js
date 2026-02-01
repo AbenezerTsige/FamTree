@@ -158,11 +158,16 @@ const FamilyMembers = ({ onMemberChange }) => {
       <div className="members-header">
         <h2>{editingId ? 'Edit Family Member' : 'Add New Family Member'}</h2>
         <div className="header-actions">
-          <button className="btn-update" onClick={onMemberChange} title="Update Dashboard">
+          {editingId && (
+            <button type="submit" form="member-form" className="btn-update-member">
+              Update Member
+            </button>
+          )}
+          <button type="button" className="btn-update" onClick={onMemberChange} title="Update Dashboard">
             Update Dashboard
           </button>
           {editingId && (
-            <button className="btn-cancel" onClick={resetForm}>Cancel</button>
+            <button type="button" className="btn-cancel" onClick={resetForm}>Cancel</button>
           )}
         </div>
       </div>
@@ -173,7 +178,7 @@ const FamilyMembers = ({ onMemberChange }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="member-form">
+      <form id="member-form" onSubmit={handleSubmit} className="member-form">
         <div className="form-row">
           <div className="form-group">
             <label>First Name *</label>
@@ -296,7 +301,7 @@ const FamilyMembers = ({ onMemberChange }) => {
           </div>
         </div>
 
-        <button type="submit" className="btn-submit">
+        <button type="submit" className="btn-submit" id="member-form-submit">
           {editingId ? 'Update Member' : 'Add Member'}
         </button>
       </form>

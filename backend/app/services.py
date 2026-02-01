@@ -44,6 +44,7 @@ class FamilyTreeService:
             color=person.color,
             font_size=getattr(person, 'font_size', None),
             font_family=getattr(person, 'font_family', None),
+            font_color=getattr(person, 'font_color', None),
             generation=generation,
             children=[]
         )
