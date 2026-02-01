@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import loginBg from '../assets/Simien-Mountains-Ethiopian-Plateau-Ethiopia.jpeg';
 import './Login.css';
 
 const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
@@ -46,12 +47,10 @@ export default function Login() {
     }
   };
 
-  const bgImage = `${process.env.PUBLIC_URL || ''}/Simien-Mountains-Ethiopian-Plateau-Ethiopia.jpeg`;
-
   return (
     <div
       className="login-page"
-      style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.6) 100%), url(${bgImage})` }}
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.6) 100%), url(${loginBg})` }}
     >
       <div className="login-card">
         <h1>Family Tree</h1>
