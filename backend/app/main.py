@@ -157,84 +157,13 @@ def create_person(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    """Create a new person (owned by current user)."""
-    from sqlalchemy import text
-
+    """Create a new person (owned by current user). Root or child uses normal auto-increment."""
     person_dict = person.dict()
     person_dict["owner_id"] = current_user.id
-
-    # If this is a root/founder (no parent), check if this owner's tree is empty
-    if person_dict.get("parent_id") is None:
-        count = db.query(models.Person).filter(models.Person.owner_id == current_user.id).count()
-        if count == 0:
-            # Table is empty - create root with ID 0
-            # Use raw SQL to bypass SQLAlchemy's auto-increment restriction
-            try:
-                first_name = person_dict.get('first_name')
-                last_name = person_dict.get('last_name', '') or ''
-                birth_date = person_dict.get('birth_date')
-                gender = person_dict.get('gender')
-                color = person_dict.get('color') or None
-                font_size = person_dict.get('font_size') or None
-                font_family = person_dict.get('font_family') or None
-                font_color = person_dict.get('font_color') or None
-                label_offset_x = person_dict.get('label_offset_x')
-                label_offset_y = person_dict.get('label_offset_y')
-                owner_id = current_user.id
-
-                # Use raw SQL with proper parameter binding
-                result = db.execute(text("""
-                    INSERT INTO persons (id, owner_id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y)
-                    VALUES (0, :owner_id, :first_name, :last_name, :birth_date, :gender, NULL, :color, :font_size, :font_family, :font_color, :label_offset_x, :label_offset_y)
-                    RETURNING id, owner_id, first_name, last_name, birth_date, gender, parent_id, color, font_size, font_family, font_color, label_offset_x, label_offset_y
-                """), {
-                    'owner_id': owner_id,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'birth_date': birth_date,
-                    'gender': gender,
-                    'color': color,
-                    'font_size': font_size,
-                    'font_family': font_family,
-                    'font_color': font_color,
-                    'label_offset_x': label_offset_x,
-                    'label_offset_y': label_offset_y
-                })
-                db.flush()
-                
-                # Reset sequence to start from 1 (next ID after 0)
-                # Can't set sequence to 0, so set it to 1 (next value will be 1)
-                try:
-                    db.execute(text("SELECT setval('persons_id_seq', 1, false)"))
-                    db.flush()
-                except Exception:
-                    pass
-                
-                # Commit the transaction first
-                db.commit()
-                
-                # Now query the created person from the database (it's now in the session)
-                db_person = db.query(models.Person).filter(models.Person.id == 0, models.Person.owner_id == current_user.id).first()
-                if not db_person:
-                    raise HTTPException(status_code=500, detail="Failed to create root person - could not retrieve created record")
-            except HTTPException:
-                raise
-            except Exception as e:
-                db.rollback()
-                raise HTTPException(status_code=500, detail="Failed to create root person")
-        else:
-            # This owner has data - use auto-increment
-            db_person = models.Person(**person_dict)
-            db.add(db_person)
-            db.commit()
-            db.refresh(db_person)
-    else:
-        # Regular child - use auto-increment
-        db_person = models.Person(**person_dict)
-        db.add(db_person)
-        db.commit()
-        db.refresh(db_person)
-
+    db_person = models.Person(**person_dict)
+    db.add(db_person)
+    db.commit()
+    db.refresh(db_person)
     return db_person
 
 
