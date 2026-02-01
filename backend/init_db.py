@@ -11,17 +11,17 @@ DATABASE_URL = os.getenv(
     "postgresql://famtree_user:famtree_pass@db:5432/famtree_db"
 )
 
-def wait_for_db(max_retries=30, delay=2):
-    """Wait for database to be ready"""
-    engine = create_engine(DATABASE_URL)
+def wait_for_db(max_retries=60, delay=3):
+    """Wait for database to be ready (up to 3 minutes)."""
+    engine = create_engine(DATABASE_URL, connect_args={"connect_timeout": 5})
     for i in range(max_retries):
         try:
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             print("Database is ready!")
             return True
-        except OperationalError:
-            print(f"Waiting for database... ({i+1}/{max_retries})")
+        except OperationalError as e:
+            print(f"Waiting for database... ({i+1}/{max_retries}) {e}")
             time.sleep(delay)
     return False
 

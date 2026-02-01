@@ -22,12 +22,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: famtree_backend
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://famtree_user:famtree_pass@db:5432/famtree_db}
       SECRET_KEY: ${SECRET_KEY:-famtree-secret-key-change-in-production}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
     ports:
-      - "8000:8000"
+      - "8001:8000"   # host 8001 so 8000 is free; frontend still reaches backend on 8000 inside Docker
     depends_on:
       db:
         condition: service_healthy
@@ -41,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: famtree_frontend
     ports:
-      - "80:80"
+      - "9000:80"   # host 9000 so 80 is free — use http://server:9000
     depends_on:
       - backend
 
