@@ -46,8 +46,13 @@ export default function Login() {
     }
   };
 
+  const bgImage = `${process.env.PUBLIC_URL || ''}/Simien-Mountains-Ethiopian-Plateau-Ethiopia.jpeg`;
+
   return (
-    <div className="login-page">
+    <div
+      className="login-page"
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.6) 100%), url(${bgImage})` }}
+    >
       <div className="login-card">
         <h1>Family Tree</h1>
         <h2>{isRegister ? 'Create account' : 'Sign in'}</h2>
