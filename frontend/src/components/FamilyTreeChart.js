@@ -7,6 +7,9 @@ const FamilyTreeChart = ({ data }) => {
   const containerRef = useRef();
   const zoomRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [textRotationDeg, setTextRotationDeg] = useState(0);
+  const RING_WIDTH = 115;
+  const CENTER_RADIUS = 50;
 
   const branchColors = [
     '#4a90e2', '#50c878', '#ff6b6b', '#ffa500', '#9b59b6'
@@ -42,8 +45,6 @@ const FamilyTreeChart = ({ data }) => {
     if (!data || data.id == null) return;
 
     const tree = JSON.parse(JSON.stringify(data));
-    const RING_WIDTH = 80;
-    const CENTER_RADIUS = 40;
 
     function layout(node, depth, parentStart, parentEnd, branchIdx) {
       node.depth = depth;
@@ -119,9 +120,10 @@ const FamilyTreeChart = ({ data }) => {
       tx += offsetX;
       ty += offsetY;
 
-      // Rotation math
+      // Rotation math: follow arc + user offset (textRotationDeg from closure)
       let rotation = (node.midAngle * 180 / Math.PI);
       if (rotation > 90 && rotation < 270) rotation -= 180; // Flip for readability
+      rotation += textRotationDeg;
 
       const grp = g.append('g').attr('transform', `translate(${tx},${ty}) rotate(${rotation})`);
       const fontSize = node.font_size ? `${node.font_size}px` : (node.depth === 0 ? '12px' : '12px');
@@ -154,11 +156,25 @@ const FamilyTreeChart = ({ data }) => {
     drawSegments(tree);
     drawLabels(tree);
 
-  }, [data]);
+  }, [data, textRotationDeg]);
 
   return (
-    <div ref={containerRef} className="chart-container" style={{ width: '100%', height: '100vh', background: '#000' }}>
-      <svg ref={svgRef} />
+    <div className="chart-wrapper">
+      <div className="chart-controls">
+        <label htmlFor="text-rotation">Text rotation (degrees):</label>
+        <input
+          id="text-rotation"
+          type="number"
+          min="-180"
+          max="180"
+          value={textRotationDeg}
+          onChange={(e) => setTextRotationDeg(Number(e.target.value) || 0)}
+          title="Rotate all labels by this many degrees"
+        />
+      </div>
+      <div ref={containerRef} className="chart-container" style={{ width: '100%', height: '100vh', background: '#000' }}>
+        <svg ref={svgRef} />
+      </div>
     </div>
   );
 };
