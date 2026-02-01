@@ -57,6 +57,7 @@ class FamilyTreeService:
             label_offset_x=getattr(person, 'label_offset_x', None),
             label_offset_y=getattr(person, 'label_offset_y', None),
             label_rotation=getattr(person, 'label_rotation', None),
+            label_radius_offset=getattr(person, 'label_radius_offset', None),
             generation=generation,
             children=[]
         )

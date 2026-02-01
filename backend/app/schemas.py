@@ -15,6 +15,7 @@ class PersonBase(BaseModel):
     label_offset_x: Optional[float] = None  # Label position offset px: negative=left, positive=right
     label_offset_y: Optional[float] = None  # Label position offset px: negative=up, positive=down
     label_rotation: Optional[float] = None  # Label rotation in degrees (added to arc-following rotation)
+    label_radius_offset: Optional[float] = None  # Label radius offset px: negative=inward, positive=outward
 
 class PersonCreate(PersonBase):
     pass

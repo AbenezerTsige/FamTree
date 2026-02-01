@@ -25,6 +25,7 @@ class Person(Base):
     label_offset_x = Column(Float, nullable=True)  # Label position offset in px: negative=left, positive=right
     label_offset_y = Column(Float, nullable=True)  # Label position offset in px: negative=up, positive=down
     label_rotation = Column(Float, nullable=True)  # Label rotation in degrees (added to arc-following rotation)
+    label_radius_offset = Column(Float, nullable=True)  # Label radius offset in px: negative=inward, positive=outward
 
     # Self-referential relationship
     parent = relationship("Person", remote_side=[id], backref="children")

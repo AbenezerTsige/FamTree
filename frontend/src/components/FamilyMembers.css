@@ -54,7 +54,7 @@
 }
 
 .form-row.form-row-label-offset {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .form-hint {

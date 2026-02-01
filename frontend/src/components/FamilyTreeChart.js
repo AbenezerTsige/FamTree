@@ -7,7 +7,6 @@ const FamilyTreeChart = ({ data }) => {
   const containerRef = useRef();
   const zoomRef = useRef(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [textRotationDeg, setTextRotationDeg] = useState(0);
   const RING_WIDTH = 115;
   const CENTER_RADIUS = 50;
 
@@ -106,7 +105,8 @@ const FamilyTreeChart = ({ data }) => {
 
     // DRAW LABELS
     function drawLabels(node) {
-      const r = (node.innerRadius + node.outerRadius) / 2;
+      let r = (node.innerRadius + node.outerRadius) / 2;
+      r += Number(node.label_radius_offset) || 0;  // Per-person: move label inward (−) or outward (+)
       const name = node.first_name || '';
       const year = node.birth_date ? new Date(node.birth_date).getFullYear() : '';
 
@@ -120,10 +120,9 @@ const FamilyTreeChart = ({ data }) => {
       tx += offsetX;
       ty += offsetY;
 
-      // Rotation math: follow arc + global offset + per-person label_rotation
+      // Rotation math: follow arc + per-person label_rotation (from Family Members)
       let rotation = (node.midAngle * 180 / Math.PI);
       if (rotation > 90 && rotation < 270) rotation -= 180; // Flip for readability
-      rotation += textRotationDeg;
       rotation += Number(node.label_rotation) || 0;
 
       const grp = g.append('g').attr('transform', `translate(${tx},${ty}) rotate(${rotation})`);
@@ -157,22 +156,10 @@ const FamilyTreeChart = ({ data }) => {
     drawSegments(tree);
     drawLabels(tree);
 
-  }, [data, textRotationDeg]);
+  }, [data]);
 
   return (
     <div className="chart-wrapper">
-      <div className="chart-controls">
-        <label htmlFor="text-rotation">Text rotation (degrees):</label>
-        <input
-          id="text-rotation"
-          type="number"
-          min="-180"
-          max="180"
-          value={textRotationDeg}
-          onChange={(e) => setTextRotationDeg(Number(e.target.value) || 0)}
-          title="Rotate all labels by this many degrees"
-        />
-      </div>
       <div ref={containerRef} className="chart-container">
         <svg ref={svgRef} />
       </div>
