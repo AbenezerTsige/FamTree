@@ -48,8 +48,9 @@
   margin-bottom: 15px;
 }
 
-.form-row.form-row-three {
-  grid-template-columns: 1fr 1fr 1fr;
+.form-row.form-row-three,
+.form-row.form-row-four {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .font-size-input {

@@ -123,10 +123,11 @@ const FamilyTreeChart = ({ data }) => {
       const fontSize = node.font_size ? `${node.font_size}px` : (node.depth === 0 ? '12px' : '12px');
       const yearSize = node.font_size ? `${Math.max(8, parseInt(node.font_size, 10) - 2)}px` : '10px';
       const fontFamily = node.font_family || 'Arial';
+      const textColor = (node.font_color && node.font_color.startsWith('#')) ? node.font_color : '#fff';
 
       grp.append('text')
         .attr('text-anchor', 'middle')
-        .attr('fill', '#fff')
+        .attr('fill', textColor)
         .attr('font-size', fontSize)
         .attr('font-family', fontFamily)
         .attr('dy', node.depth === 0 ? '0' : '-2')
@@ -135,7 +136,8 @@ const FamilyTreeChart = ({ data }) => {
       if (year) {
         grp.append('text')
           .attr('text-anchor', 'middle')
-          .attr('fill', 'rgba(255,255,255,0.7)')
+          .attr('fill', textColor)
+          .attr('opacity', 0.8)
           .attr('font-size', yearSize)
           .attr('font-family', fontFamily)
           .attr('dy', '12')
