@@ -26,6 +26,15 @@ const FamilyMembers = ({ onMemberChange }) => {
 
   const apiUrl = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000');
 
+  const getErrorMessage = (detail) => {
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((d) => (d && d.msg) ? d.msg : JSON.stringify(d)).join('; ');
+    }
+    if (detail && typeof detail === 'object') return JSON.stringify(detail);
+    return 'Request failed';
+  };
+
   const fetchMembers = async () => {
     try {
       setLoading(true);
@@ -35,7 +44,7 @@ const FamilyMembers = ({ onMemberChange }) => {
       setMembers(data);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setError(typeof err?.message === 'string' ? err.message : (err && String(err)) || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -70,7 +79,7 @@ const FamilyMembers = ({ onMemberChange }) => {
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to update member');
+          throw new Error(getErrorMessage(errorData.detail) || 'Failed to update member');
         }
       } else {
         const response = await fetch(`${apiUrl}/api/persons`, {
@@ -80,7 +89,7 @@ const FamilyMembers = ({ onMemberChange }) => {
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to create member');
+          throw new Error(getErrorMessage(errorData.detail) || 'Failed to create member');
         }
       }
 
@@ -88,7 +97,7 @@ const FamilyMembers = ({ onMemberChange }) => {
       await fetchMembers();
       if (onMemberChange) onMemberChange();
     } catch (err) {
-      setError(err.message);
+      setError(typeof err?.message === 'string' ? err.message : (err && String(err)) || 'Something went wrong');
     }
   };
 
@@ -144,7 +153,7 @@ const FamilyMembers = ({ onMemberChange }) => {
         gender: inlineFormData.gender,
         parent_id: inlineFormData.parent_id && inlineFormData.parent_id !== 'none' ? parseInt(inlineFormData.parent_id) : null,
         color: inlineFormData.color || null,
-        font_size: inlineFormData.font_size !== '' ? (parseInt(inlineFormData.font_size, 10) || null) : null,
+        font_size: inlineFormData.font_size !== '' && inlineFormData.font_size != null ? String(inlineFormData.font_size) : null,
         font_family: inlineFormData.font_family || null,
         font_color: inlineFormData.font_color || null,
         label_offset_x: inlineFormData.label_offset_x !== '' && inlineFormData.label_offset_x !== undefined ? parseFloat(inlineFormData.label_offset_x) : null,
@@ -159,14 +168,14 @@ const FamilyMembers = ({ onMemberChange }) => {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to update member');
+        throw new Error(getErrorMessage(errorData.detail) || 'Failed to update member');
       }
       setError(null);
       cancelInlineEdit();
       await fetchMembers();
       if (onMemberChange) onMemberChange();
     } catch (err) {
-      setError(err.message);
+      setError(typeof err?.message === 'string' ? err.message : (err && String(err)) || 'Something went wrong');
     }
   };
 
@@ -186,8 +195,8 @@ const FamilyMembers = ({ onMemberChange }) => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to delete member');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(getErrorMessage(errorData.detail) || 'Failed to delete member');
       }
       
       // Refresh the members list to reflect the deletion
@@ -198,7 +207,7 @@ const FamilyMembers = ({ onMemberChange }) => {
         onMemberChange();
       }
     } catch (err) {
-      setError(err.message);
+      setError(typeof err?.message === 'string' ? err.message : (err && String(err)) || 'Something went wrong');
       console.error('Delete error:', err);
     }
   };
