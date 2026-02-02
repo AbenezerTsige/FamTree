@@ -232,6 +232,94 @@
   background-color: #333;
 }
 
+.members-table tbody tr.row-editing {
+  background-color: rgba(65, 105, 225, 0.15);
+}
+
+.inline-edit-row td {
+  padding: 0;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #252525;
+}
+
+.inline-edit-form {
+  padding: 16px 12px;
+}
+
+.inline-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+
+.inline-edit-form .inline-edit-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inline-edit-form .inline-edit-group label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.inline-edit-form .inline-edit-group input,
+.inline-edit-form .inline-edit-group select {
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 13px;
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.inline-edit-form .inline-edit-group input:focus,
+.inline-edit-form .inline-edit-group select:focus {
+  outline: none;
+  border-color: #4169e1;
+}
+
+.inline-edit-form .color-picker-container {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.inline-edit-form .color-picker {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+.inline-edit-form .color-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.inline-edit-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inline-edit-actions .btn-submit,
+.inline-edit-actions .btn-cancel {
+  margin-top: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
 .gender-badge {
   display: inline-block;
   padding: 4px 8px;

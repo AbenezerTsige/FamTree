@@ -7,6 +7,8 @@ const FamilyMembers = ({ onMemberChange }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [inlineEditingId, setInlineEditingId] = useState(null);
+  const [inlineFormData, setInlineFormData] = useState({});
   const [formData, setFormData] = useState({
     first_name: '',
     birth_date: '',
@@ -106,6 +108,66 @@ const FamilyMembers = ({ onMemberChange }) => {
       label_rotation: member.label_rotation != null ? String(member.label_rotation) : '',
       label_radius_offset: member.label_radius_offset != null ? String(member.label_radius_offset) : ''
     });
+  };
+
+  const startInlineEdit = (member) => {
+    setInlineEditingId(member.id);
+    setInlineFormData({
+      first_name: member.first_name,
+      birth_date: member.birth_date,
+      gender: member.gender,
+      parent_id: member.parent_id || '',
+      color: member.color || '#4a90e2',
+      font_size: member.font_size != null ? String(member.font_size) : '',
+      font_family: member.font_family || 'Arial',
+      font_color: member.font_color || '#ffffff',
+      label_offset_x: member.label_offset_x != null ? String(member.label_offset_x) : '',
+      label_offset_y: member.label_offset_y != null ? String(member.label_offset_y) : '',
+      label_rotation: member.label_rotation != null ? String(member.label_rotation) : '',
+      label_radius_offset: member.label_radius_offset != null ? String(member.label_radius_offset) : ''
+    });
+  };
+
+  const cancelInlineEdit = () => {
+    setInlineEditingId(null);
+    setInlineFormData({});
+  };
+
+  const handleInlineSave = async (e) => {
+    e.preventDefault();
+    if (!inlineEditingId) return;
+    try {
+      const submitData = {
+        first_name: inlineFormData.first_name,
+        last_name: '',
+        birth_date: inlineFormData.birth_date,
+        gender: inlineFormData.gender,
+        parent_id: inlineFormData.parent_id && inlineFormData.parent_id !== 'none' ? parseInt(inlineFormData.parent_id) : null,
+        color: inlineFormData.color || null,
+        font_size: inlineFormData.font_size !== '' ? (parseInt(inlineFormData.font_size, 10) || null) : null,
+        font_family: inlineFormData.font_family || null,
+        font_color: inlineFormData.font_color || null,
+        label_offset_x: inlineFormData.label_offset_x !== '' && inlineFormData.label_offset_x !== undefined ? parseFloat(inlineFormData.label_offset_x) : null,
+        label_offset_y: inlineFormData.label_offset_y !== '' && inlineFormData.label_offset_y !== undefined ? parseFloat(inlineFormData.label_offset_y) : null,
+        label_rotation: inlineFormData.label_rotation !== '' && inlineFormData.label_rotation !== undefined ? parseFloat(inlineFormData.label_rotation) : null,
+        label_radius_offset: inlineFormData.label_radius_offset !== '' && inlineFormData.label_radius_offset !== undefined ? parseFloat(inlineFormData.label_radius_offset) : null
+      };
+      const response = await fetch(`${apiUrl}/api/persons/${inlineEditingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify(submitData)
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to update member');
+      }
+      setError(null);
+      cancelInlineEdit();
+      await fetchMembers();
+      if (onMemberChange) onMemberChange();
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -401,65 +463,241 @@ const FamilyMembers = ({ onMemberChange }) => {
                 <th>Font color</th>
                 <th>Font size</th>
                 <th>Font</th>
+                <th>Label X</th>
+                <th>Label Y</th>
+                <th>Rotation</th>
+                <th>Arc offset</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {members.length === 0 ? (
               <tr>
-                <td colSpan="10" className="no-data">No family members found</td>
+                <td colSpan="14" className="no-data">No family members found</td>
               </tr>
               ) : (
                 members.map(member => (
-                  <tr key={member.id}>
-                    <td>{member.id}</td>
-                    <td>{member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name}</td>
-                    <td>{new Date(member.birth_date).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`gender-badge gender-${member.gender}`}>
-                        {member.gender}
-                      </span>
-                    </td>
-                    <td>
-                      {member.parent_id ? getMemberName(member.parent_id) : '—'}
-                    </td>
-                    <td>
-                      <div className="color-display">
-                        <div 
-                          className="color-swatch" 
-                          style={{ backgroundColor: member.color || '#4a90e2' }}
-                          title={member.color || '#4a90e2'}
-                        ></div>
-                        <span className="color-code">{member.color || '—'}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="color-display">
-                        <div 
-                          className="color-swatch" 
-                          style={{ backgroundColor: member.font_color || '#ffffff' }}
-                          title={member.font_color || '#ffffff'}
-                        ></div>
-                        <span className="color-code">{member.font_color || '—'}</span>
-                      </div>
-                    </td>
-                    <td>{member.font_size || '—'}</td>
-                    <td>{member.font_family || '—'}</td>
-                    <td>
-                      <button
-                        className="btn-edit"
-                        onClick={() => handleEdit(member)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn-delete"
-                        onClick={() => handleDelete(member.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                  <React.Fragment key={member.id}>
+                    <tr className={inlineEditingId === member.id ? 'row-editing' : ''}>
+                      <td>{member.id}</td>
+                      <td>{member.last_name ? `${member.first_name} ${member.last_name}` : member.first_name}</td>
+                      <td>{new Date(member.birth_date).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`gender-badge gender-${member.gender}`}>
+                          {member.gender}
+                        </span>
+                      </td>
+                      <td>
+                        {member.parent_id ? getMemberName(member.parent_id) : '—'}
+                      </td>
+                      <td>
+                        <div className="color-display">
+                          <div 
+                            className="color-swatch" 
+                            style={{ backgroundColor: member.color || '#4a90e2' }}
+                            title={member.color || '#4a90e2'}
+                          ></div>
+                          <span className="color-code">{member.color || '—'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="color-display">
+                          <div 
+                            className="color-swatch" 
+                            style={{ backgroundColor: member.font_color || '#ffffff' }}
+                            title={member.font_color || '#ffffff'}
+                          ></div>
+                          <span className="color-code">{member.font_color || '—'}</span>
+                        </div>
+                      </td>
+                      <td>{member.font_size ?? '—'}</td>
+                      <td>{member.font_family || '—'}</td>
+                      <td>{member.label_offset_x != null ? member.label_offset_x : '—'}</td>
+                      <td>{member.label_offset_y != null ? member.label_offset_y : '—'}</td>
+                      <td>{member.label_rotation != null ? member.label_rotation : '—'}</td>
+                      <td>{member.label_radius_offset != null ? member.label_radius_offset : '—'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn-edit"
+                          onClick={() => startInlineEdit(member)}
+                          title="Edit in place"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-delete"
+                          onClick={() => handleDelete(member.id)}
+                          disabled={inlineEditingId === member.id}
+                          title={inlineEditingId === member.id ? 'Save or cancel first' : 'Delete'}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                    {inlineEditingId === member.id && (
+                      <tr className="inline-edit-row">
+                        <td colSpan="14">
+                          <form className="inline-edit-form" onSubmit={handleInlineSave}>
+                            <div className="inline-edit-grid">
+                              <div className="inline-edit-group">
+                                <label>First name</label>
+                                <input
+                                  type="text"
+                                  value={inlineFormData.first_name ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, first_name: e.target.value })}
+                                  required
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Birth date</label>
+                                <input
+                                  type="date"
+                                  value={inlineFormData.birth_date ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, birth_date: e.target.value })}
+                                  required
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Gender</label>
+                                <select
+                                  value={inlineFormData.gender ?? 'male'}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, gender: e.target.value })}
+                                >
+                                  <option value="male">Male</option>
+                                  <option value="female">Female</option>
+                                  <option value="other">Other</option>
+                                </select>
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Parent</label>
+                                <select
+                                  value={inlineFormData.parent_id ?? 'none'}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, parent_id: e.target.value === 'none' ? '' : e.target.value })}
+                                >
+                                  <option value="none">None (Root)</option>
+                                  {members
+                                    .filter(m => m.id !== inlineEditingId)
+                                    .map(m => (
+                                      <option key={m.id} value={m.id}>
+                                        {m.last_name ? `${m.first_name} ${m.last_name}` : m.first_name}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Segment color</label>
+                                <div className="color-picker-container">
+                                  <input
+                                    type="color"
+                                    value={inlineFormData.color ?? '#4a90e2'}
+                                    onChange={(e) => setInlineFormData({ ...inlineFormData, color: e.target.value })}
+                                    className="color-picker"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={inlineFormData.color ?? ''}
+                                    onChange={(e) => setInlineFormData({ ...inlineFormData, color: e.target.value })}
+                                    className="color-input"
+                                  />
+                                </div>
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Font color</label>
+                                <div className="color-picker-container">
+                                  <input
+                                    type="color"
+                                    value={inlineFormData.font_color ?? '#ffffff'}
+                                    onChange={(e) => setInlineFormData({ ...inlineFormData, font_color: e.target.value })}
+                                    className="color-picker"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={inlineFormData.font_color ?? ''}
+                                    onChange={(e) => setInlineFormData({ ...inlineFormData, font_color: e.target.value })}
+                                    className="color-input"
+                                  />
+                                </div>
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Font size</label>
+                                <input
+                                  type="number"
+                                  min="8"
+                                  max="32"
+                                  value={inlineFormData.font_size ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, font_size: e.target.value })}
+                                  placeholder="12"
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Font</label>
+                                <select
+                                  value={inlineFormData.font_family ?? 'Arial'}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, font_family: e.target.value })}
+                                >
+                                  <option value="Arial">Arial</option>
+                                  <option value="Georgia">Georgia</option>
+                                  <option value="Times New Roman">Times New Roman</option>
+                                  <option value="Verdana">Verdana</option>
+                                  <option value="Helvetica">Helvetica</option>
+                                  <option value="serif">Serif</option>
+                                  <option value="sans-serif">Sans-serif</option>
+                                  <option value="cursive">Cursive</option>
+                                  <option value="monospace">Monospace</option>
+                                </select>
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Label offset X (px)</label>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  value={inlineFormData.label_offset_x ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, label_offset_x: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Label offset Y (px)</label>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  value={inlineFormData.label_offset_y ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, label_offset_y: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Label rotation (deg)</label>
+                                <input
+                                  type="number"
+                                  step="1"
+                                  value={inlineFormData.label_rotation ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, label_rotation: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="inline-edit-group">
+                                <label>Arc offset (px)</label>
+                                <input
+                                  type="number"
+                                  step="1"
+                                  value={inlineFormData.label_radius_offset ?? ''}
+                                  onChange={(e) => setInlineFormData({ ...inlineFormData, label_radius_offset: e.target.value })}
+                                  placeholder="0"
+                                />
+                              </div>
+                            </div>
+                            <div className="inline-edit-actions">
+                              <button type="submit" className="btn-submit">Save</button>
+                              <button type="button" className="btn-cancel" onClick={cancelInlineEdit}>Cancel</button>
+                            </div>
+                          </form>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </tbody>
